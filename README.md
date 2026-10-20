@@ -307,6 +307,6 @@ Released under the [MIT License](LICENSE). See `LICENSE` for details.
 **Straw Hat Pirates** · Team ID `VTU-QFF-HC-0106` · Tier `Online`
 · Built with ⚛️ Qiskit for the VTU-QFF Hackathon
 
-[⬆ Back to Top](#Straw Hat Pirates)
+[⬆ Back to Top](#straw-hat-pirates)
 
 </div>
