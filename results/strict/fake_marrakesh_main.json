@@ -1,0 +1,515 @@
+{
+ "backend": "fake_marrakesh",
+ "tag": "main",
+ "shots": 4000,
+ "hardware": false,
+ "criteria": "strict-v1",
+ "circuits": [
+  {
+   "kind": "shor",
+   "a": 2,
+   "control": false,
+   "layout": "auto",
+   "physical_qubits": [
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    18
+   ],
+   "depth": 521,
+   "two_qubit_gates": 177,
+   "num_qubits_used": 7,
+   "counts": {
+    "100": 1013,
+    "010": 966,
+    "000": 1024,
+    "110": 936,
+    "101": 18,
+    "111": 13,
+    "001": 16,
+    "011": 14
+   }
+  },
+  {
+   "kind": "shor",
+   "a": 4,
+   "control": false,
+   "layout": "auto",
+   "physical_qubits": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    19,
+    35
+   ],
+   "depth": 214,
+   "two_qubit_gates": 62,
+   "num_qubits_used": 7,
+   "counts": {
+    "000": 1998,
+    "101": 18,
+    "100": 1877,
+    "010": 42,
+    "001": 24,
+    "011": 3,
+    "110": 38
+   }
+  },
+  {
+   "kind": "shor",
+   "a": 7,
+   "control": false,
+   "layout": "auto",
+   "physical_qubits": [
+    10,
+    11,
+    12,
+    13,
+    14,
+    18,
+    31
+   ],
+   "depth": 512,
+   "two_qubit_gates": 173,
+   "num_qubits_used": 7,
+   "counts": {
+    "010": 931,
+    "000": 1089,
+    "110": 880,
+    "100": 1032,
+    "011": 23,
+    "111": 16,
+    "001": 16,
+    "101": 13
+   }
+  },
+  {
+   "kind": "shor",
+   "a": 8,
+   "control": false,
+   "layout": "auto",
+   "physical_qubits": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    18
+   ],
+   "depth": 504,
+   "two_qubit_gates": 171,
+   "num_qubits_used": 7,
+   "counts": {
+    "110": 970,
+    "000": 984,
+    "100": 1003,
+    "010": 989,
+    "001": 14,
+    "011": 13,
+    "111": 11,
+    "101": 16
+   }
+  },
+  {
+   "kind": "shor",
+   "a": 11,
+   "control": false,
+   "layout": "auto",
+   "physical_qubits": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    17
+   ],
+   "depth": 241,
+   "two_qubit_gates": 70,
+   "num_qubits_used": 7,
+   "counts": {
+    "100": 1921,
+    "000": 1973,
+    "110": 39,
+    "101": 12,
+    "010": 29,
+    "001": 14,
+    "111": 5,
+    "011": 7
+   }
+  },
+  {
+   "kind": "shor",
+   "a": 13,
+   "control": false,
+   "layout": "auto",
+   "physical_qubits": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    17
+   ],
+   "depth": 542,
+   "two_qubit_gates": 177,
+   "num_qubits_used": 7,
+   "counts": {
+    "000": 1132,
+    "010": 888,
+    "110": 889,
+    "100": 1055,
+    "001": 11,
+    "101": 6,
+    "011": 8,
+    "111": 11
+   }
+  },
+  {
+   "kind": "shor",
+   "a": 14,
+   "control": true,
+   "layout": "auto",
+   "physical_qubits": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    18
+   ],
+   "depth": 49,
+   "two_qubit_gates": 19,
+   "num_qubits_used": 7,
+   "counts": {
+    "000": 1969,
+    "010": 18,
+    "100": 1914,
+    "101": 39,
+    "110": 22,
+    "111": 5,
+    "001": 25,
+    "011": 8
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 1,
+   "iterations": 2,
+   "control": false,
+   "layout": "auto",
+   "physical_qubits": [
+    13,
+    14,
+    15
+   ],
+   "depth": 477,
+   "two_qubit_gates": 143,
+   "num_qubits_used": 3,
+   "counts": {
+    "100": 139,
+    "001": 2888,
+    "000": 172,
+    "101": 190,
+    "010": 166,
+    "110": 126,
+    "011": 183,
+    "111": 136
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 3,
+   "iterations": 2,
+   "control": false,
+   "layout": "auto",
+   "physical_qubits": [
+    13,
+    14,
+    15
+   ],
+   "depth": 477,
+   "two_qubit_gates": 143,
+   "num_qubits_used": 3,
+   "counts": {
+    "011": 2862,
+    "010": 162,
+    "000": 149,
+    "110": 161,
+    "001": 169,
+    "111": 202,
+    "101": 157,
+    "100": 138
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 6,
+   "iterations": 2,
+   "control": false,
+   "layout": "auto",
+   "physical_qubits": [
+    13,
+    14,
+    15
+   ],
+   "depth": 479,
+   "two_qubit_gates": 143,
+   "num_qubits_used": 3,
+   "counts": {
+    "111": 169,
+    "110": 2879,
+    "100": 198,
+    "101": 133,
+    "010": 177,
+    "011": 139,
+    "000": 178,
+    "001": 127
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 4,
+   "iterations": 0,
+   "control": true,
+   "layout": "auto",
+   "sweep": true,
+   "physical_qubits": [
+    6,
+    65,
+    89
+   ],
+   "depth": 4,
+   "two_qubit_gates": 0,
+   "num_qubits_used": 3,
+   "counts": {
+    "101": 480,
+    "110": 502,
+    "010": 513,
+    "011": 510,
+    "001": 456,
+    "111": 525,
+    "000": 497,
+    "100": 517
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 4,
+   "iterations": 1,
+   "control": false,
+   "layout": "auto",
+   "sweep": true,
+   "physical_qubits": [
+    13,
+    14,
+    15
+   ],
+   "depth": 249,
+   "two_qubit_gates": 71,
+   "num_qubits_used": 3,
+   "counts": {
+    "100": 2698,
+    "111": 177,
+    "011": 183,
+    "000": 196,
+    "101": 173,
+    "110": 217,
+    "001": 178,
+    "010": 178
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 4,
+   "iterations": 2,
+   "control": false,
+   "layout": "auto",
+   "sweep": true,
+   "physical_qubits": [
+    13,
+    14,
+    15
+   ],
+   "depth": 479,
+   "two_qubit_gates": 143,
+   "num_qubits_used": 3,
+   "counts": {
+    "100": 2849,
+    "101": 176,
+    "110": 184,
+    "111": 154,
+    "000": 193,
+    "001": 149,
+    "010": 140,
+    "011": 155
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 4,
+   "iterations": 3,
+   "control": false,
+   "layout": "auto",
+   "sweep": true,
+   "physical_qubits": [
+    13,
+    14,
+    15
+   ],
+   "depth": 731,
+   "two_qubit_gates": 227,
+   "num_qubits_used": 3,
+   "counts": {
+    "110": 431,
+    "101": 430,
+    "000": 429,
+    "100": 952,
+    "111": 450,
+    "001": 434,
+    "011": 422,
+    "010": 452
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 4,
+   "iterations": 4,
+   "control": false,
+   "layout": "auto",
+   "sweep": true,
+   "physical_qubits": [
+    13,
+    14,
+    15
+   ],
+   "depth": 959,
+   "two_qubit_gates": 285,
+   "num_qubits_used": 3,
+   "counts": {
+    "101": 540,
+    "001": 521,
+    "110": 550,
+    "010": 564,
+    "011": 532,
+    "000": 499,
+    "100": 305,
+    "111": 489
+   }
+  },
+  {
+   "kind": "shor",
+   "a": 7,
+   "control": false,
+   "layout": "region-1",
+   "physical_qubits": [
+    89,
+    90,
+    78,
+    91,
+    69,
+    98,
+    92
+   ],
+   "depth": 545,
+   "two_qubit_gates": 223,
+   "num_qubits_used": 7,
+   "counts": {
+    "010": 891,
+    "100": 1059,
+    "000": 1043,
+    "110": 892,
+    "011": 27,
+    "001": 31,
+    "111": 30,
+    "101": 27
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 4,
+   "iterations": 2,
+   "control": false,
+   "layout": "region-1",
+   "physical_qubits": [
+    89,
+    90,
+    78
+   ],
+   "depth": 477,
+   "two_qubit_gates": 139,
+   "num_qubits_used": 3,
+   "counts": {
+    "100": 2313,
+    "111": 248,
+    "011": 229,
+    "001": 241,
+    "000": 269,
+    "110": 268,
+    "010": 210,
+    "101": 222
+   }
+  },
+  {
+   "kind": "shor",
+   "a": 7,
+   "control": false,
+   "layout": "region-2",
+   "physical_qubits": [
+    112,
+    111,
+    98,
+    110,
+    91,
+    109,
+    90
+   ],
+   "depth": 521,
+   "two_qubit_gates": 181,
+   "num_qubits_used": 7,
+   "counts": {
+    "100": 978,
+    "110": 877,
+    "010": 944,
+    "101": 46,
+    "000": 998,
+    "111": 50,
+    "001": 64,
+    "011": 43
+   }
+  },
+  {
+   "kind": "grover",
+   "secret": 4,
+   "iterations": 2,
+   "control": false,
+   "layout": "region-2",
+   "physical_qubits": [
+    112,
+    111,
+    98
+   ],
+   "depth": 475,
+   "two_qubit_gates": 140,
+   "num_qubits_used": 3,
+   "counts": {
+    "100": 2644,
+    "101": 187,
+    "010": 201,
+    "110": 203,
+    "001": 207,
+    "011": 166,
+    "111": 191,
+    "000": 201
+   }
+  }
+ ]
+}

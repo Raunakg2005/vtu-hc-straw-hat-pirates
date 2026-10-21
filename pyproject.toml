@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qday-time-machine"
+version = "0.2.0"
+description = "Quantum threat forecasting and proof for cryptographic infrastructure"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Team Straw Hat Pirates" }]
+dependencies = [
+  "qiskit>=2.1",
+  "qiskit-aer>=0.17",
+  "qiskit-ibm-runtime>=0.41",
+  "cryptography>=44",
+  "kyber-py>=1.2",
+  "dilithium-py>=1.5",
+  "numpy>=1.26",
+  "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+app = ["streamlit>=1.40", "plotly>=5.20", "pandas>=2.0", "matplotlib>=3.8", "pylatexenc>=2.10", "aiohttp>=3.9"]
+dev = ["pytest>=8.0", "pytest-cov>=5", "hypothesis>=6.100", "ruff>=0.5"]
+
+[project.scripts]
+qday = "qday.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["qday*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
+filterwarnings = ["ignore"]
+markers = [
+  "network: needs internet access",
+  "hardware: submits jobs to real IBM Quantum hardware (costs QPU time)",
+  "slow: takes more than a few seconds",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S"]
+ignore = ["S101", "S311", "S603", "S607", "E501", "UP038"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "B"]
+"scripts/*" = ["E402"]
+"samples/*" = ["S"]  # deliberately vulnerable demo code for the scanner
+
+[tool.coverage.run]
+source = ["qday"]
+omit = ["qday/ui.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

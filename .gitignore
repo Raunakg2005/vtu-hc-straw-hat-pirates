@@ -55,3 +55,11 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Project-specific
+*.env
+!.env.example
+.hypothesis/
+.streamlit/secrets.toml
+*.log
+# hardware results in results/ ARE committed
