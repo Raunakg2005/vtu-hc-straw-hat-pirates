@@ -15,6 +15,7 @@ from qday.forecast.estimates import SOURCES
 from qday.forecast.risk import assess_all, harvest_now_window, timeline_status
 from qday.forecast.roadmap import ROADMAP, ROADMAP_SOURCES, SCENARIOS, machine_at
 from qday.migrate.pqc import hybrid_key_exchange, signature_comparison
+from qday.quantum import debug as qdebug
 from qday.quantum import grover, shor
 from qday.quantum.runner import load_result, run_sampler
 from qday.safety import parse_hosts
@@ -271,6 +272,19 @@ def run_shor(a, N, n_count, backend):
     st.session_state["shor_live"] = (shor.analyse_counts(res["counts"], a, N, n_count), backend)
 
 
+@st.cache_data(show_spinner="Stepping through the circuit with quantum-debugger…")
+def cached_trace(plaintext, key, iterations, n_bits):
+    return qdebug.grover_trace(plaintext, key, iterations, n_bits)
+
+
+@st.cache_data(show_spinner=False)
+def cached_cross_checks(shor_a, plaintext, key, iterations, n_bits):
+    circuits = [(f"Shor N = 15, a = {shor_a}", shor.order_finding_circuit(shor_a, 15, 3)),
+                (f"Grover {n_bits}-bit", grover.grover_key_search_circuit(
+                    plaintext, grover.toy_encrypt(plaintext, key, n_bits), iterations, n_bits))]
+    return [{"label": label, **qdebug.cross_check(circuit)} for label, circuit in circuits]
+
+
 def run_grover(p, c, iters, n_bits, backend):
     qc = grover.grover_key_search_circuit(p, c, iters, n_bits)
     res = run_sampler([qc], backend, shots=4000)["circuits"][0]
@@ -512,6 +526,62 @@ with tab_prove:
                              highlight={r["recovered_key"]} if r["key_is_correct"] else set(),
                              title="How often each key came out", xaxis="key"),
                         use_container_width=True, theme=None, config=CHART_CFG)
+
+    # ------------------------------------------------ inside the circuit, with quantum-debugger
+    ui.section(st, "Inside the circuit", "Pause the attack <em style='color:#e85291'>mid-flight</em>.",
+               "Stepped through with <a href='https://pypi.org/project/quantum-debugger/'>quantum-debugger</a>, "
+               "our own open-source quantum circuit debugger. It runs the Grover attack above one gate at a time, "
+               "stops after every oracle and diffuser, and also re-simulates every attack circuit as an independent "
+               "check on Qiskit.")
+    max_iters = grover.optimal_iterations(n_bits) + 2
+    trace_iters = st.slider("Grover iterations to step through", 1, max_iters, max_iters - 1, key=f"trace_iters_{n_bits}",
+                            help="Go past the optimum to see the probability fall again (overshoot).")
+    trace = cached_trace(plaintext, int(secret), trace_iters, n_bits)
+    stops = trace["markers"]
+    stage = st.select_slider("Stop after", [m["label"] for m in stops], value=stops[min(2, len(stops) - 1)]["label"],
+                             key=f"trace_stage_{n_bits}_{trace_iters}")
+    stop = next(m for m in stops if m["label"] == stage)
+    amps, key = stop["amplitudes"], trace["key"]
+    mean = sum(amps) / len(amps)
+    left, right = st.columns([3, 2], gap="large")
+    with left:
+        fig = go.Figure(go.Bar(x=list(range(len(amps))), y=amps, marker_color=[ui.PINK if k == key else ui.LAVENDER
+                                                                                 for k in range(len(amps))],
+                               marker_line=dict(color=ui.PLUM, width=1), hovertemplate="key %{x}: %{y:.3f}<extra></extra>"))
+        fig.add_hline(y=mean, line=dict(color=ui.PLUM, dash="dash", width=1.5),
+                      annotation_text=f"mean {mean:+.3f}", annotation_position="top left")
+        fig.add_hline(y=0, line=dict(color=ui.BORDER, width=1))
+        fig.update_layout(height=340, title=f"Amplitude of every key after {stage.lower()}", xaxis_title="key",
+                          yaxis_title="amplitude", yaxis=dict(range=[-1.05, 1.05]), xaxis=dict(dtick=1),
+                          showlegend=False, margin=dict(t=50))
+        st.plotly_chart(fig, use_container_width=True, theme=None, config=CHART_CFG)
+    with right:
+        labels = ["start"] + [f"after {i}" for i in range(1, trace_iters + 1)]
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=labels, y=trace["theory"], mode="lines", name="sin² law",
+                                 line=dict(color=ui.PLUM, dash="dot", width=2)))
+        fig.add_trace(go.Scatter(x=labels, y=trace["after_iteration"], mode="markers", name="quantum-debugger",
+                                 marker=dict(color=ui.PINK, size=12, line=dict(color=ui.PLUM, width=1))))
+        fig.update_layout(height=340, title="Chance of the secret key", yaxis=dict(range=[0, 1.05], tickformat=".0%"),
+                          legend=dict(orientation="h", y=-0.2), margin=dict(t=50))
+        st.plotly_chart(fig, use_container_width=True, theme=None, config=CHART_CFG)
+    if stage.startswith("Oracle"):
+        explain = (f"The oracle ran the cipher's S-box on every key at once and flipped the sign of key {key} only. "
+                   "The chance of each key is unchanged; the information is hidden in that sign.")
+    elif stage.startswith("Diffuser"):
+        explain = ("The diffuser reflected every amplitude around the mean (dashed line): the flipped key, far below "
+                   "the mean, lands far above it. That is where the extra probability comes from.")
+    else:
+        explain = "The Hadamards put every key in equal superposition: each starts with the same amplitude."
+    best_i = max(range(len(trace["after_iteration"])), key=trace["after_iteration"].__getitem__)
+    ui.note(st, f"{explain} After <b>{best_i}</b> iteration{'s' if best_i != 1 else ''} the secret key {key} has "
+                f"<b>{trace['after_iteration'][best_i]:.1%}</b> probability, exactly the sin² law "
+                f"({len(trace['steps']) - 1} gates stepped).", "good", "check")
+    checks = cached_cross_checks(a if N == 15 else 7, plaintext, int(secret), iters, n_bits)  # N = 21 is simulator-only
+    st.caption("Independent check with quantum-debugger: " + "; ".join(
+        f"{c['label']} ({c['gates']} gates, {c['qubits']} qubits): "
+        + (f"agrees with Qiskit, max difference {c['max_abs_diff']:.0e}" if c["agree"] else "DISAGREES with Qiskit")
+        for c in checks) + ".")
 
 # ---------------------------------------------------------------- 4 migrate
 with tab_migrate:

@@ -6,6 +6,7 @@ kyber-py>=1.2
 dilithium-py>=1.5
 numpy>=1.26
 scipy>=1.11
+quantum-debugger>=1.1
 streamlit>=1.40
 plotly>=5.20
 pandas>=2.0

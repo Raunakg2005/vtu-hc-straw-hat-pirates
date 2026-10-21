@@ -19,6 +19,7 @@ dependencies = [
   "dilithium-py>=1.5",
   "numpy>=1.26",
   "scipy>=1.11",
+  "quantum-debugger>=1.1",
 ]
 
 [project.optional-dependencies]

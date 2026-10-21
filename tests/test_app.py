@@ -189,3 +189,18 @@ def test_sidebar_reset_restores_default_assumptions():
     assert (at.slider(key="shelf_life").value, at.slider(key="migration").value) == (10, 3)
     assert at.radio(key="scenario").value == "trend"
     assert at.selectbox(key="rsa_source").value == "gidney2025"
+
+
+def test_inside_the_circuit_steps_through_grover_with_quantum_debugger():
+    at = fresh()
+    text = page_text(at)
+    assert "Pause the attack" in text and "quantum-debugger" in text
+    assert "exactly the sin² law" in text
+    assert "agrees with Qiskit" in " ".join(str(c.value) for c in at.caption)
+    assert "reflected every amplitude around the mean" in text  # default stop: after the first diffuser
+    at.select_slider(key="trace_stage_3_3").set_value("Oracle 2").run()
+    assert "flipped the sign of key" in page_text(at)
+    at.selectbox(key="grover_bits").set_value(4).run()
+    at.slider(key="trace_iters_4").set_value(3).run()
+    assert not at.exception
+    assert "96.1%" in page_text(at)  # 4-bit optimum after 3 iterations

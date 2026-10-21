@@ -98,7 +98,7 @@ the fault-tolerant machines on the roadmap.
 | **2. CBOM** | Exports a **CycloneDX 1.6 Cryptography Bill of Materials** with a quantum-security level per algorithm. | CBOM format (IBM Research, now in CycloneDX) |
 | **3. Time Machine** | A year slider compares each algorithm's published **logical-qubit and Toffoli-gate cost** with **IBM's roadmap** (Starling 2029, Blue Jay 2033+), so it can say "enough qubits, not enough operations yet". | IBM roadmap |
 | **4. Risk** | **Mosca's inequality** and a **harvest-now window**: which recorded traffic becomes readable, and when. | — |
-| **5. Prove it** | Scaled-down attacks: **Shor's order finding** factors N = 15 and 21, **Grover** recovers a toy block-cipher key. Run on simulators and **real IBM quantum hardware**. | **Qiskit**, Aer, Qiskit Runtime `SamplerV2`, ibm_fez, ibm_kingston, ibm_marrakesh |
+| **5. Prove it** | Scaled-down attacks: **Shor's order finding** factors N = 15 and 21, **Grover** recovers a toy block-cipher key. Run on simulators and **real IBM quantum hardware**, and stepped through gate by gate with **quantum-debugger**. | **Qiskit**, Aer, Qiskit Runtime `SamplerV2`, ibm_fez, ibm_kingston, ibm_marrakesh, [quantum-debugger](https://pypi.org/project/quantum-debugger/) |
 | **6. Migrate** | Live **hybrid X25519 + ML-KEM-768** key exchange (FIPS 203) and **ML-DSA-65** signatures (FIPS 204) side by side with RSA-2048 and ECDSA P-256. | NIST PQC standards |
 
 ---
@@ -146,6 +146,19 @@ flowchart LR
 - About (π/4)·√(2ⁿ) oracle calls instead of up to 2ⁿ classical trials: the square-root speed-up that
   halves symmetric key strength (why AES-128 → AES-256).
 - Success probability matches `sin²((2i+1)θ)` for every iteration count *i*, including overshoot.
+
+### Inside the circuit with quantum-debugger — `qday/quantum/debug.py`
+[quantum-debugger](https://pypi.org/project/quantum-debugger/) is our team lead's open-source quantum circuit
+debugger (`pip install quantum-debugger`). We use it for two things:
+- **An independent second simulator.** Every Shor and Grover circuit is transpiled to the gates its Qiskit
+  adapter supports and re-simulated gate by gate by quantum-debugger's own state-vector engine. It agrees with
+  Qiskit on every Shor base of 15 and every Grover key tested (largest difference 3 × 10⁻¹³), so the ideal distributions our
+  hardware results are scored against do not rest on a single simulator. Conversion is exact or refused:
+  if any gate would be skipped, it raises instead of silently dropping it.
+- **Step-through view.** `QuantumDebugger` replays the Grover attack one gate at a time and stops after the
+  Hadamards and after every oracle and diffuser. The dashboard's *Inside the circuit* view shows the amplitude
+  of every key at each stop: the oracle flips the secret key's sign, the diffuser reflects every amplitude
+  around the mean, and the key's probability after each iteration equals the sin² law.
 
 ---
 
@@ -240,6 +253,7 @@ can be forged.
 | Quantum hardware | IBM Quantum: ibm_fez, ibm_kingston, ibm_marrakesh |
 | Simulation | AerSimulator (ideal) and fake backends with device noise models |
 | Post-quantum crypto | kyber-py (ML-KEM-768, FIPS 203), dilithium-py (ML-DSA-65, FIPS 204), cryptography (X25519, HKDF) |
+| Circuit debugging | [quantum-debugger](https://pypi.org/project/quantum-debugger/) `>=1.1` (step-through, independent state-vector check) |
 | Statistics | NumPy, SciPy (Wilson intervals, binomial and chi-square tests) |
 | Dashboard | Streamlit, Plotly, pandas |
 | Landing page | three.js, GSAP + ScrollTrigger, Lenis (from pinned CDN builds) |
@@ -265,14 +279,14 @@ vtu-hc-straw-hat-pirates/
 │   ├── cli.py                # `qday` command-line tool
 │   ├── safety.py             # hostname / port validation
 │   ├── ui.py                 # dashboard styling and components
-│   ├── quantum/              # shor.py, grover.py, runner.py, stats.py, validation.py
+│   ├── quantum/              # shor.py, grover.py, runner.py, stats.py, validation.py, debug.py
 │   ├── scanner/              # tls.py, code.py, cbom.py
 │   ├── forecast/             # estimates.py, roadmap.py, risk.py
 │   └── migrate/              # pqc.py (hybrid X25519 + ML-KEM-768, ML-DSA-65)
 ├── scripts/                  # IBM hardware runs: first run, 3-backend suite, strict suite
 ├── results/                  # raw hardware counts and reports
 ├── samples/legacy_app/       # deliberately vulnerable sample code for the scanner demo
-├── tests/                    # 901 tests
+├── tests/                    # 968 tests
 └── .github/workflows/ci.yml  # lint + tests on Python 3.11 and 3.12
 ```
 
@@ -355,7 +369,7 @@ python scripts/hardware_strict.py submit --backend ibm_kingston --repeat
 ### 5. Run the tests
 
 ```bash
-pytest -m "not network and not hardware"   # 899 offline tests
+pytest -m "not network and not hardware"   # 966 offline tests
 pytest -m network                          # 2 live checks against our own site
 ```
 
@@ -363,7 +377,7 @@ pytest -m network                          # 2 live checks against our own site
 
 ## 🧪 Testing
 
-**901 tests, 96% line coverage.**
+**968 tests, 96% line coverage.**
 
 | Type | Tests | What it proves |
 | :--- | :--- | :--- |
@@ -377,7 +391,8 @@ pytest -m network                          # 2 live checks against our own site
 | CLI | 28 | Outputs, `--fail-on` exit codes, CBOM export, injection and bad-input handling |
 | Golden results | 26 | Every hardware claim in this README recomputed from the raw counts |
 | Config and runner | 26 | Credential precedence, `.env` parsing, the token never printed, backend selection, batching |
-| End-to-end app (AppTest) | 23 | The real dashboard driven headlessly: nothing prefilled, settings reset, every tab, bad inputs |
+| End-to-end app (AppTest) | 24 | The real dashboard driven headlessly: nothing prefilled, settings reset, every tab, the step-through view, bad inputs |
+| quantum-debugger integration | 66 | Every Shor base of 15 and every 3-bit Grover key agree with Qiskit; step-through matches the sin² law for every key; the oracle flips only the key's sign and the diffuser reflects about the mean; lossy conversion is refused |
 | Statistics and strict criteria | 27 | Pass rules accept good data and reject noise, on synthetic distributions |
 | One-port server (`serve.py`) | 16 | Cookies, bodies, redirects, gzip, websocket subprotocols, >4 MB messages, 502 when the dashboard is down |
 | Performance | 4 | 1,500-file scan < 15 s; 10,000 assets assessed < 3 s |
@@ -523,7 +538,7 @@ git pull --rebase       # update your branch on top of main
 - NIST FIPS 203 (ML-KEM) and FIPS 204 (ML-DSA); NIST IR 8547 (initial public draft, 2024); CycloneDX 1.6 CBOM
 - M. Mosca, *Cybersecurity in an era with quantum computers: will we be ready?* (2018)
 
-**Open-source libraries used:** Qiskit, Qiskit Aer, Qiskit IBM Runtime, cryptography, kyber-py (ML-KEM),
+**Open-source libraries used:** Qiskit, Qiskit Aer, Qiskit IBM Runtime, quantum-debugger, cryptography, kyber-py (ML-KEM),
 dilithium-py (ML-DSA), Streamlit, Plotly, pandas, NumPy, SciPy, aiohttp, three.js, GSAP, Lenis, pytest,
 Hypothesis.
 
