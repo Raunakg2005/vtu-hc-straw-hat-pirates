@@ -231,7 +231,7 @@ can be forged.
 
 ---
 
-## 🛠️ Tech Stack
+## 🧰 Tech Stack
 
 | Layer | Technology |
 | :--- | :--- |
@@ -391,7 +391,7 @@ could freeze the UI.
 
 ---
 
-## 🛡️ Production Hardening
+## 🔒 Production Hardening
 
 - **Input validation** (`qday/safety.py`): hostnames are checked against RFC 1123 / IP literals before use,
   blocking argument injection into `openssl s_client` (e.g. a "host" of `-proxy evil:8080`).
@@ -404,7 +404,7 @@ could freeze the UI.
 
 ---
 
-## ⚖️ Honest Limits
+## 🚧 Honest Limits
 
 - The Shor and Grover demos break **toy** instances (N = 15, 21; 3–4-bit keys), not production keys.
 - Break years depend on published estimates and on IBM's stated intent; after 2033 the "trend" scenario is
@@ -486,7 +486,7 @@ git pull --rebase       # update your branch on top of main
 
 ## ✅ Submission Checklist
 
-- [ ] Repository created and **public**
+- [x] Repository created and **public**
 - [ ] All team members added as **collaborators** and invitations accepted
 - [x] `README.md` updated with project details, problem statement and solution
 - [x] Team members listed under [Team Members](#-team-members-github-ids)
