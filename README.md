@@ -7,9 +7,9 @@
 Team **Straw Hat Pirates** · `VTU-QFF-HC-0106` · Online · Track 1: Quantum Cryptography & Security
 VTU-QFF Hackathon — Qiskit Fall Fest 2026
 
-[![Watch the 2-minute demo on YouTube](https://img.youtube.com/vi/8AHgcPisYlE/maxresdefault.jpg)](https://youtu.be/8AHgcPisYlE)
+[![Watch the demo on YouTube](https://img.youtube.com/vi/nhXP6QLFjoU/maxresdefault.jpg)](https://youtu.be/nhXP6QLFjoU)
 
-**[▶ Watch the demo (2 min)](https://youtu.be/8AHgcPisYlE)** &nbsp;·&nbsp;
+**[▶ Watch the demo (under 7 min, with a technical deep-dive)](https://youtu.be/nhXP6QLFjoU)** &nbsp;·&nbsp;
 **[Presentation (PPTX)](docs/Q-Day_Time_Machine_VTU-QFF-HC-0106.pptx)** &nbsp;·&nbsp;
 **[Run it in 3 commands](#quick-start)** &nbsp;·&nbsp;
 **[Full hardware results](docs/RESULTS.md)** &nbsp;·&nbsp;
@@ -32,7 +32,7 @@ VTU-QFF Hackathon — Qiskit Fall Fest 2026
 | **What we built** | A scanner, a year-by-year break forecast against IBM's quantum roadmap, Shor and Grover attacks run on real IBM hardware, and the NIST post-quantum fix, in one dashboard and CLI. |
 | **Hardware proof** | **45 / 45** validation tests passed on **ibm_fez, ibm_kingston and ibm_marrakesh**; Shor factored 15 = 3 × 5 on every machine (24 / 24 strict tests). 8 jobs, 163 s of QPU time, every job ID listed. |
 | **Our finding** | We measured the error per two-qubit gate on all three machines: **~3 × 10⁻³ on the best qubits**, three times the published RSA-2048 estimate's assumption, so the attack would need **~4 million** physical qubits rather than under 1 million. A compiler's default qubits can sit **above the error-correction threshold**. [Details](#hardware-calibrated-q-day). |
-| **Engineering** | **998 tests**, 96% line coverage, CI on Python 3.11 and 3.12 with a secret scan, Docker image, `qday` CLI that can gate CI. |
+| **Engineering** | **1,002 tests**, 96% line coverage, CI on Python 3.11 and 3.12 with a secret scan, Docker image, `qday` CLI that can gate CI. |
 | **Our library** | [quantum-debugger](https://pypi.org/project/quantum-debugger/) re-simulates every attack circuit as an independent check on Qiskit and powers a gate-by-gate step-through view. |
 
 ---
@@ -331,7 +331,7 @@ pytest -m "not network and not hardware"   # 996 offline tests
 pytest -m network                          # 2 live checks against our own site
 ```
 
-**998 tests, 96% line coverage.**
+**1,002 tests, 96% line coverage.**
 
 | Type | Tests | What it proves |
 | :--- | ---: | :--- |
@@ -391,7 +391,7 @@ dashboard; a missing folder reported "0 findings".
 ├── results/                  # raw hardware counts and reports
 ├── samples/legacy_app/       # deliberately vulnerable code for the scanner demo
 ├── docs/                     # USER_GUIDE.md, ARCHITECTURE.md, RESULTS.md (generated), presentation, screenshots
-├── tests/                    # 998 tests
+├── tests/                    # 1,002 tests
 ├── Dockerfile                # production image
 └── .github/workflows/ci.yml  # lint and tests on Python 3.11 and 3.12
 ```
@@ -427,11 +427,11 @@ KJ Somaiya College of Engineering, India.
 ## Submission checklist
 
 - [x] Repository created and **public**
-- [ ] All team members added as **collaborators** and invitations accepted
+- [x] All team members added as **collaborators** and invitations accepted
 - [x] README with project details, problem statement and solution
 - [x] Team members listed
 - [x] `requirements.txt` committed and the project runs from a clean clone
-- [ ] Code merged to `main` and the latest `main` builds successfully
+- [x] Code merged to `main` and the latest `main` builds successfully
 - [x] No notebooks (nothing to clear)
 - [x] Demo video and screenshots in the README
 - [ ] Short project summary submitted on the hackathon portal

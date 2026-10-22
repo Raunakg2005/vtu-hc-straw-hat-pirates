@@ -130,7 +130,7 @@ drift from the raw counts.
 
 ## Testing
 
-998 tests at 96% line coverage, run in CI on Python 3.11 and 3.12. By kind:
+1,002 tests at 96% line coverage, run in CI on Python 3.11 and 3.12. By kind:
 
 - **Exhaustive:** every modular multiplier on every input; Shor for every base of 15 and 21; Grover for every key
   against the sin² law.

@@ -11,7 +11,7 @@ hide:
 real IBM quantum hardware, and get the post-quantum fix.</strong></p>
 
 [Get started](USER_GUIDE.md#install){ .md-button .md-button--primary }
-[Watch the 2-minute demo](https://youtu.be/8AHgcPisYlE){ .md-button }
+[Watch the demo](https://youtu.be/nhXP6QLFjoU){ .md-button }
 [View on GitHub](https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates){ .md-button }
 
 </div>
@@ -25,7 +25,7 @@ qday scan --path ./src --fail-on critical
 <div><b>45 / 45</b><span>validation tests passed on three IBM quantum computers</span></div>
 <div><b>~3×10⁻³</b><span>error per two-qubit gate we measured on the best qubits</span></div>
 <div><b>~4 M</b><span>physical qubits RSA-2048 would need at that error rate</span></div>
-<div><b>998</b><span>automated tests, 96% line coverage</span></div>
+<div><b>1,002</b><span>automated tests, 96% line coverage</span></div>
 </div>
 
 ## The problem

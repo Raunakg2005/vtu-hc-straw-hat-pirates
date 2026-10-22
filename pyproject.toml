@@ -54,7 +54,7 @@ qday = "qday.cli:main"
 Homepage = "https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates"
 Documentation = "https://qday-time-machine.readthedocs.io/"
 Source = "https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates"
-Demo = "https://youtu.be/8AHgcPisYlE"
+Demo = "https://youtu.be/nhXP6QLFjoU"
 Changelog = "https://qday-time-machine.readthedocs.io/en/latest/changelog/"
 Issues = "https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates/issues"
 

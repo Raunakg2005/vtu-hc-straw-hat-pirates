@@ -15,7 +15,7 @@ then gives you the replacement.
 ![Q-Day Time Machine: each ring is one year on IBM's quantum roadmap, green while safe and pink once breakable](https://raw.githubusercontent.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates/main/docs/screenshots/landing.jpg)
 
 **[Documentation](https://qday-time-machine.readthedocs.io/)** ·
-**[2-minute demo video](https://youtu.be/8AHgcPisYlE)** ·
+**[Demo video, with a technical deep-dive](https://youtu.be/nhXP6QLFjoU)** ·
 **[Source, dashboard and hardware results](https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates)**
 
 ## Features
