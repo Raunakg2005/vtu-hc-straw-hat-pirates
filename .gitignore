@@ -66,3 +66,6 @@ Thumbs.db
 
 # demo video working files and renders (large media, not part of the code)
 demo_video/
+
+# presentation build workspace and renders (the deck is shared separately)
+presentation/

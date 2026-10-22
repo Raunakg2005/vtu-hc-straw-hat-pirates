@@ -8,6 +8,10 @@
 
 **Find the cryptography a quantum computer will break, see *when* it breaks, prove it on real IBM quantum hardware, and get the fix.**
 
+[![Watch the 2-minute demo on YouTube](https://img.youtube.com/vi/8AHgcPisYlE/maxresdefault.jpg)](https://youtu.be/8AHgcPisYlE)
+
+▶ **[Watch the 2-minute demo](https://youtu.be/8AHgcPisYlE)**
+
 </div>
 
 ---
@@ -21,6 +25,7 @@
 | **Tier** | Online |
 | **Project** | Q-Day Time Machine |
 | **Track** | Track 1: Quantum Cryptography & Security |
+| **Demo video** | [youtu.be/8AHgcPisYlE](https://youtu.be/8AHgcPisYlE) |
 | **Repository** | [vtu-hc-straw-hat-pirates](https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates.git) |
 | **Organisation** | [vtu-qiskit-fall-fest-2026](https://github.com/vtu-qiskit-fall-fest-2026) |
 | **Event** | VTU-QFF Hackathon — VTU-Qiskit Fall Fest 2026 |
@@ -508,7 +513,7 @@ git pull --rebase       # update your branch on top of main
 - [x] `requirements.txt` committed and project runs from a clean clone
 - [ ] Code pushed to `main` and the latest `main` builds successfully
 - [x] Notebooks committed with **cleared outputs** (no notebooks in this project)
-- [ ] `README` includes a demo screenshot / video link
+- [x] `README` includes a demo screenshot / video link
 - [ ] Short project summary submitted on the hackathon portal
 
 ---
