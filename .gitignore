@@ -63,3 +63,6 @@ Thumbs.db
 .streamlit/secrets.toml
 *.log
 # hardware results in results/ ARE committed
+
+# demo video working files and renders (large media, not part of the code)
+demo_video/

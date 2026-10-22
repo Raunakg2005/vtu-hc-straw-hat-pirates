@@ -155,10 +155,12 @@ with tab_scan:
         endpoints = st.session_state.get("endpoints", [])
         pq = [e["host"] for e in endpoints if e.get("key_exchange_group") and "MLKEM" in e["key_exchange_group"].upper()]
         if pq:
-            ui.note(st, f"<b>{', '.join(pq)}</b> already use post-quantum key exchange "
+            one = len(pq) == 1
+            ui.note(st, f"<b>{', '.join(pq)}</b> already {'uses' if one else 'use'} post-quantum key exchange "
                         "(<code>X25519MLKEM768</code>): traffic recorded today stays secret.", "good")
-            ui.note(st, "But their <b>certificates still use ECDSA</b>, which a quantum computer can forge. "
-                        "Once that is possible, someone could impersonate these sites.", "warn")
+            ui.note(st, f"But {'its <b>certificate still uses' if one else 'their <b>certificates still use'} "
+                        "ECDSA</b>, which a quantum computer can forge. Once that is possible, someone could "
+                        f"impersonate {'this site' if one else 'these sites'}.", "warn")
 
         ui.finding_groups(st, [
             ("Fix now", "Broken today, or data at risk before you could migrate", "alert", ui.BERRY, fix_now),

@@ -103,3 +103,15 @@ def test_amplitudes_have_unit_norm_and_uniform_start():
     for stop in trace["markers"]:
         assert sum(x * x for x in stop["amplitudes"]) == pytest.approx(1.0, abs=1e-9)
     assert trace["markers"][0]["amplitudes"] == pytest.approx([0.25] * 16, abs=1e-9)
+
+
+def test_sign_convention_matches_the_textbook_picture():
+    """After each diffuser the key is drawn positive and is the reflection of the oracle stop about its mean."""
+    trace = debug.grover_trace(plaintext=5, key=6, iterations=3, n_bits=3)
+    stops = trace["markers"]
+    for oracle_stop, diffuser_stop in zip(stops[1::2], stops[2::2], strict=True):
+        o, d = oracle_stop["amplitudes"], diffuser_stop["amplitudes"]
+        mean = sum(o) / len(o)
+        assert d[6] > 0
+        assert d == pytest.approx([2 * mean - x for x in o], abs=1e-9)
+    assert stops[1]["amplitudes"][6] < 0 < stops[1]["amplitudes"][0]  # the first oracle flips only the key

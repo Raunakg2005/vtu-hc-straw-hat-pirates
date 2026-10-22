@@ -11,54 +11,54 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..800&family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&display=swap">
 <style>
-/* A night-flight through time: a fixed three.js tunnel (one ring per year, colored by what a quantum computer of
-   that year can break) sits behind the whole page, and scrolling flies the camera forward to 2050.
-   Content floats over it on dark glass. The page is dark by design in both color schemes. */
+/* Same design tokens as the dashboard (qday/ui.py, .streamlit/config.toml): Qiskit Fall Fest 2026 lavender grid,
+   cream cards, plum ink, pink accent. A three.js tunnel (one ring per year, colored by what a quantum computer of
+   that year can break) floats behind the page on a transparent canvas; scrolling flies the camera to 2050. */
 :root {
-  --bg: #0b0510; --surface: rgba(28, 14, 37, .78); --ink: #f8f0fb; --muted: #c2b1cf;
-  --line: rgba(255, 255, 255, .12); --accent: #ff6fa8; --accent-deep: #e85291; --lav: #b7a2f2; --sun: #f4c84e;
-  --good: #6fe3b0; --bad: #ff7aa5; --code-bg: rgba(8, 3, 12, .9);
+  --bg: #f4efff; --surface: #fff9f3; --ink: #392045; --muted: #756879; --line: #d8cadc;
+  --accent: #e85291; --berry: #b3245e; --lav: #dcd2fa; --violet: #7a5cb8; --sun: #f4c84e; --sun-ink: #a87a06;
+  --good: #2f8f6b; --bad: #b3245e; --grid: rgba(122, 92, 184, .07); --code-bg: #24122e; --shadow: 57, 32, 69;
   --display: "Fraunces", Georgia, "Times New Roman", serif;
   --body: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
   --mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", monospace;
-  --radius: 1.25rem; --gutter: max(16px, env(safe-area-inset-left, 0px)); --gutter-r: max(16px, env(safe-area-inset-right, 0px));
-  color-scheme: dark;
+  --radius: 1.15rem; --gutter: max(16px, env(safe-area-inset-left, 0px)); --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --bg: #0b0510; --ink: #f8f0fb; --muted: #c2b1cf; color-scheme: dark; }
-}
-:root[data-theme="dark"] { --bg: #0b0510; --ink: #f8f0fb; --muted: #c2b1cf; color-scheme: dark; }
+/* the dashboard is light-only (Streamlit theme base = light), so the landing page stays light in every scheme */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #f4efff; --ink: #392045; color-scheme: light; } }
+:root[data-theme="dark"] { --bg: #f4efff; --ink: #392045; color-scheme: light; }
 
 * { box-sizing: border-box; }
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 body {
   margin: 0; background-color: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6;
-  background-image: radial-gradient(90% 60% at 70% 20%, #3a1747 0%, transparent 60%), radial-gradient(70% 50% at 10% 90%, #241046 0%, transparent 60%);
-  background-attachment: fixed; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 44px 44px; background-attachment: fixed; overflow-x: hidden; -webkit-font-smoothing: antialiased;
 }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; opacity: 0; transition: opacity 1.2s ease; pointer-events: none; }
 #scene.ready { opacity: 1; }
 .shade { position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background: linear-gradient(90deg, rgba(11, 5, 16, .78) 0%, rgba(11, 5, 16, .45) 38%, transparent 62%),
-              radial-gradient(120% 80% at 70% 36%, transparent 40%, rgba(11, 5, 16, .6) 100%); }
+  background: linear-gradient(90deg, rgba(244, 239, 255, .96) 0%, rgba(244, 239, 255, .86) 38%, rgba(244, 239, 255, .4) 52%, rgba(244, 239, 255, 0) 64%); }
 @media (max-width: 1023px) {
-  /* narrow screens: the tunnel lives in the top band, text below sits on a darker scrim */
-  .shade { background: linear-gradient(180deg, transparent 0%, transparent 22%, rgba(11, 5, 16, .72) 40%, rgba(11, 5, 16, .82) 100%); }
+  /* narrow screens: the tunnel lives in the top band, text below sits on a lavender scrim */
+  .shade { background: linear-gradient(180deg, rgba(244, 239, 255, 0) 0%, rgba(244, 239, 255, 0) 22%, rgba(244, 239, 255, .85) 40%, rgba(244, 239, 255, .92) 100%); }
 }
 .page { position: relative; z-index: 1; }
 .wrap { max-width: 1200px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
 section { padding-block: clamp(64px, 11vw, 140px); }
-h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.04; text-wrap: balance; margin: 0; }
-h1 { font-size: clamp(2.6rem, 7.4vw, 6rem); }
-h2 { font-size: clamp(2rem, 5vw, 3.6rem); }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.04; text-wrap: balance; margin: 0; color: var(--ink); }
+h1 { font-size: clamp(2.6rem, 6.6vw, 5.4rem); }
+h2 { font-size: clamp(2rem, 4.6vw, 3.4rem); }
 h3 { font-size: 1.3rem; }
 em { color: var(--accent); font-style: italic; }
 p { margin: 0; max-width: 62ch; }
-.lede { color: var(--muted); font-size: clamp(1.02rem, 1.4vw, 1.2rem); }
+.lede { color: var(--muted); font-size: clamp(1.02rem, 1.4vw, 1.18rem); }
+main .section-head, .cta, .hero-copy { text-shadow: 0 0 2px rgba(244, 239, 255, 1), 0 0 18px rgba(244, 239, 255, .95), 0 0 34px rgba(244, 239, 255, .9); }
 a { color: var(--accent); text-underline-offset: 3px; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
-.eyebrow { display: inline-flex; align-items: center; gap: .6rem; color: var(--accent); font-weight: 800; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; }
+.eyebrow { display: inline-flex; align-items: center; gap: .55rem; color: var(--accent); font-weight: 800; font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; }
+.eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
 .eyebrow b { font-family: var(--mono); color: var(--muted); font-weight: 600; letter-spacing: .05em; }
 .stack { display: grid; gap: 1.1rem; }
 .num { font-variant-numeric: tabular-nums; }
@@ -66,62 +66,60 @@ a { color: var(--accent); text-underline-offset: 3px; }
 
 /* ---------- chrome: progress, nav, flight HUD */
 #progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 30; transform-origin: 0 50%; transform: scaleX(0);
-  background: linear-gradient(90deg, var(--good), var(--sun), var(--accent)); }
+  background: linear-gradient(90deg, var(--violet), var(--accent)); }
 .nav { position: fixed; top: 12px; left: 0; right: 0; z-index: 20; pointer-events: none; }
-.nav .bar { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .55rem .6rem .55rem 1rem;
-  border-radius: 999px; border: 1px solid transparent; transition: background-color .4s, border-color .4s; }
-.nav.scrolled .bar { background: rgba(20, 9, 27, .72); border-color: var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.nav .bar { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .5rem .55rem .5rem 1rem;
+  border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 249, 243, .82);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 6px 24px -14px rgba(var(--shadow), .35); transition: background-color .4s; }
+.nav.scrolled .bar { background: rgba(255, 249, 243, .94); }
 .brand { font-family: var(--display); font-weight: 600; font-size: 1.08rem; display: flex; align-items: center; gap: .5rem; color: var(--ink); text-decoration: none; white-space: nowrap; }
 .links { display: flex; gap: 1.5rem; font-weight: 700; font-size: .9rem; }
-.links a { color: var(--ink); text-decoration: none; opacity: .75; transition: opacity .2s, color .2s; }
-.links a:hover { opacity: 1; color: var(--accent); }
-.hud { position: fixed; z-index: 20; left: var(--gutter); bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: .9rem;
-  padding: .5rem 1rem .5rem .5rem; border-radius: 999px; background: rgba(20, 9, 27, .8); border: 1px solid var(--line);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: .82rem; font-weight: 700;
-  opacity: 0; transform: translateY(20px); transition: opacity .5s, transform .5s; pointer-events: none; max-width: calc(100vw - 32px); }
-.hud.on { opacity: 1; transform: none; }
-.hud .yr { font-family: var(--display); font-size: 1.15rem; background: var(--ink); color: var(--bg); border-radius: 999px; padding: .1rem .7rem; }
+.links a { color: var(--ink); text-decoration: none; transition: color .2s; }
+.links a:hover { color: var(--accent); }
+.hud { display: flex; align-items: center; gap: .75rem; padding: .2rem .8rem .2rem .2rem; border-radius: 999px; background: var(--bg);
+  border: 1px solid var(--line); font-size: .78rem; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden;
+  max-width: 0; opacity: 0; padding-inline: 0; border-width: 0; transition: max-width .5s, opacity .4s, padding .5s; pointer-events: none; }
+.hud.on { max-width: 420px; opacity: 1; padding: .2rem .8rem .2rem .2rem; border-width: 1px; }
+.hud .yr { font-family: var(--display); font-size: 1rem; background: var(--ink); color: var(--surface); border-radius: 999px; padding: .05rem .6rem; }
 .hud .s { display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap; }
-.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; box-shadow: 0 0 10px currentColor; }
-.c-safe { color: var(--good); } .c-ready { color: var(--sun); } .c-broken { color: var(--bad); }
-.dot.c-safe { background: var(--good); } .dot.c-ready { background: var(--sun); } .dot.c-broken { background: var(--bad); }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.c-safe { color: var(--good); } .c-ready { color: var(--sun-ink); } .c-broken { color: var(--bad); }
+.dot.c-safe { background: var(--good); } .dot.c-ready { background: var(--sun); } .dot.c-broken { background: var(--accent); }
 
-/* ---------- buttons */
-.btn { display: inline-flex; align-items: center; gap: .5rem; padding: .9rem 1.4rem; border-radius: 999px; font-weight: 800; font-size: .98rem;
-  text-decoration: none; border: 1px solid transparent; transition: box-shadow .25s, background-color .25s; will-change: transform; }
-.btn.primary { background: linear-gradient(135deg, #ff8cbc, var(--accent-deep)); color: #1b0c22;
-  box-shadow: 0 14px 34px -12px rgba(255, 111, 168, .9), inset 0 1px 0 rgba(255, 255, 255, .5); }
-.btn.ghost { color: var(--ink); border-color: var(--line); background: rgba(255, 255, 255, .05); }
-.btn.ghost:hover { background: rgba(255, 255, 255, .1); }
-.btn.sm { padding: .55rem 1rem; font-size: .86rem; white-space: nowrap; }
+/* ---------- buttons (pill, as in the dashboard) */
+.btn { display: inline-flex; align-items: center; gap: .5rem; padding: .85rem 1.4rem; border-radius: 999px; font-weight: 800; font-size: .98rem;
+  text-decoration: none; border: 1px solid transparent; transition: background-color .25s, color .25s, border-color .25s; will-change: transform; }
+.btn.primary { background: var(--accent); color: var(--surface); box-shadow: 0 10px 24px -12px rgba(232, 82, 145, .8); }
+.btn.primary:hover { background: var(--ink); }
+.btn.ghost { color: var(--ink); border-color: var(--line); background: var(--surface); }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn.sm { padding: .5rem 1rem; font-size: .86rem; white-space: nowrap; }
+.btn { text-shadow: none; }
 
 /* ---------- hero */
 .hero { min-height: 100svh; display: grid; align-content: center; padding-block: 110px 56px; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(28px, 4vw, 56px); align-items: end; }
 .hero-grid .panel { justify-self: end; width: 100%; max-width: 480px; margin-top: 34vh; }
-.hero-copy { display: grid; gap: 1.4rem; }
-.title { text-shadow: 0 4px 40px rgba(11, 5, 16, .8); }
+.hero-copy { display: grid; gap: 1.3rem; }
+.hero-copy .lede { max-width: 29em; }
 .title .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 .04em .14em; margin-bottom: -.14em; }
 .title .w > * { display: inline-block; }
 .actions { display: flex; flex-wrap: wrap; gap: .8rem; }
 .credits { color: var(--muted); font-size: .88rem; }
-.panel { position: relative; padding: 1.25rem; border-radius: 1.5rem; background: rgba(24, 11, 32, .6); border: 1px solid var(--line);
-  backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
-  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .85), inset 0 1px 0 rgba(255, 255, 255, .12); display: grid; gap: 1rem; min-width: 0; }
-.panel::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
-  background: linear-gradient(140deg, rgba(255, 140, 188, .7), transparent 40%, transparent 60%, rgba(183, 162, 242, .6));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.panel { position: relative; padding: 1.25rem; border-radius: var(--radius); background: rgba(255, 249, 243, .9); border: 1px solid var(--line);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 24px 60px -30px rgba(var(--shadow), .55); display: grid; gap: 1rem; min-width: 0; }
 .panel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: .8rem; flex-wrap: wrap; }
-.label { font-size: .66rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-.year { font-family: var(--display); font-size: clamp(2.8rem, 7vw, 4.2rem); line-height: .95; color: var(--accent); text-shadow: 0 0 30px rgba(255, 111, 168, .6); }
-.toggle { display: inline-flex; background: rgba(0, 0, 0, .35); border: 1px solid var(--line); border-radius: 999px; padding: .22rem; gap: .15rem; }
+.label { font-size: .66rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.year { font-family: var(--display); font-size: clamp(2.8rem, 7vw, 4rem); line-height: .95; color: var(--ink); }
+.toggle { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: .22rem; gap: .15rem; }
 .toggle button { border: 0; background: transparent; color: var(--ink); font: inherit; font-size: .8rem; font-weight: 700; padding: .42rem .85rem; border-radius: 999px; cursor: pointer; white-space: nowrap; }
-.toggle button[aria-pressed="true"] { background: var(--ink); color: #1b0c22; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
 input[type="range"] { width: 100%; accent-color: var(--accent); height: 32px; cursor: grab; margin: 0; }
 .ticks { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); font-family: var(--mono); }
 .readout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .55rem; margin: 0; }
-.readout div { background: rgba(0, 0, 0, .3); border: 1px solid var(--line); border-radius: .85rem; padding: .55rem .7rem; min-width: 0; }
-.readout dt { font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+.readout div { background: var(--bg); border: 1px solid var(--line); border-radius: .85rem; padding: .55rem .7rem; min-width: 0; }
+.readout dt { font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 800; }
 .readout dd { margin: 0; font-weight: 800; font-size: .98rem; overflow-wrap: anywhere; }
 .legend-row { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: .76rem; color: var(--muted); }
 .legend-row span { display: inline-flex; align-items: center; gap: .4rem; }
@@ -130,34 +128,36 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 32px; cu
 .scroll-cue i::after { content: ""; position: absolute; left: 50%; top: 6px; width: 4px; height: 7px; margin-left: -2px; border-radius: 2px; background: var(--accent); animation: cue 1.6s infinite; }
 @keyframes cue { 0% { transform: translateY(0); opacity: 1; } 80% { transform: translateY(12px); opacity: 0; } 100% { opacity: 0; } }
 
-/* ---------- surfaces */
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1.1rem, 2.4vw, 1.6rem);
-  box-shadow: 0 30px 60px -36px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(255, 255, 255, .07); min-width: 0; }
-.tilt { transform: perspective(1000px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg)); transition: transform .4s cubic-bezier(.2, .8, .2, 1), border-color .3s; }
-.tilt:hover { border-color: rgba(255, 140, 188, .35); }
+/* ---------- surfaces (the dashboard's cream cards) */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1.1rem, 2.4vw, 1.5rem);
+  box-shadow: 0 6px 24px -14px rgba(var(--shadow), .35); min-width: 0; }
+.tilt { transform: perspective(1000px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg)); transition: transform .4s cubic-bezier(.2, .8, .2, 1), box-shadow .3s; }
+.tilt:hover { box-shadow: 0 22px 44px -22px rgba(var(--shadow), .45); }
 .section-head { display: grid; gap: 1.1rem; max-width: 820px; }
-.grid-3, .grid-4, .grid-2 { display: grid; gap: clamp(.9rem, 1.8vw, 1.4rem); margin-top: clamp(2rem, 4vw, 3rem); }
+.grid-3, .grid-4, .grid-2 { display: grid; gap: clamp(.9rem, 1.8vw, 1.2rem); margin-top: clamp(2rem, 4vw, 3rem); }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-.fact { display: grid; gap: .5rem; align-content: start; position: relative; overflow: hidden; }
-.fact .big { font-family: var(--display); font-size: clamp(2.6rem, 5vw, 3.6rem); line-height: 1; color: var(--accent); }
-.fact .src { font-size: .8rem; color: var(--muted); }
-.fact::after { content: ""; position: absolute; right: -40px; top: -40px; width: 140px; height: 140px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, rgba(255, 111, 168, .25), transparent 70%); }
+/* stat cards: the dashboard's pink / lavender / yellow countdown cards */
+.fact { display: grid; gap: .5rem; align-content: start; }
+.fact .big { font-family: var(--display); font-size: clamp(2.6rem, 5vw, 3.4rem); line-height: 1; color: var(--ink); }
+.fact .src { font-size: .8rem; color: #5b4566; }
+.fact:nth-child(1) { background: #f7a8c8; border-color: #f095ba; }
+.fact:nth-child(2) { background: var(--lav); border-color: #c9bbf0; }
+.fact:nth-child(3) { background: #f8dc8b; border-color: #efcd6a; }
 
-.step { display: grid; gap: .7rem; align-content: start; }
-.step .ico { width: 50px; height: 50px; border-radius: 15px; display: grid; place-items: center; color: #fff;
-  background: linear-gradient(145deg, #ff8cbc, #b3245e); box-shadow: 0 12px 24px -10px rgba(255, 111, 168, .9), inset 0 1px 0 rgba(255, 255, 255, .45); }
-.step:nth-child(2) .ico { background: linear-gradient(145deg, #c1aef8, #5b3fb0); box-shadow: 0 12px 24px -10px rgba(140, 110, 230, .9), inset 0 1px 0 rgba(255, 255, 255, .45); }
-.step:nth-child(3) .ico { background: linear-gradient(145deg, #ffe08a, #c99412); color: #2a1600; box-shadow: 0 12px 24px -10px rgba(244, 200, 78, .8), inset 0 1px 0 rgba(255, 255, 255, .5); }
-.step:nth-child(4) .ico { background: linear-gradient(145deg, #8ff0c6, #2f8f6b); color: #062a1c; box-shadow: 0 12px 24px -10px rgba(111, 227, 176, .8), inset 0 1px 0 rgba(255, 255, 255, .5); }
-.step .k { font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+/* steps: the dashboard's numbered step strip */
+.step { display: grid; gap: .6rem; align-content: start; }
+.step .ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--surface); background: var(--ink); }
+.step:nth-child(2) .ico { background: var(--accent); }
+.step:nth-child(3) .ico { background: var(--violet); }
+.step:nth-child(4) .ico { background: var(--good); }
+.step .k { font-family: var(--mono); font-size: .76rem; color: var(--accent); font-weight: 700; }
 .step p { color: var(--muted); font-size: .95rem; }
 
 .figure { display: grid; gap: .9rem; margin: 0; align-content: start; }
-.claim { font-family: var(--display); font-size: clamp(1.3rem, 2.4vw, 1.65rem); line-height: 1.2; }
+.claim { font-family: var(--display); font-size: clamp(1.3rem, 2.4vw, 1.6rem); line-height: 1.2; }
 .note { color: var(--muted); font-size: .9rem; }
 .chart { width: 100%; height: auto; display: block; overflow: visible; }
 .chart text { fill: var(--muted); font-family: var(--body); font-size: 12px; }
@@ -167,10 +167,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 32px; cu
 .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
 
 .score { display: grid; gap: .3rem; align-content: start; }
-.score b { font-family: var(--display); font-size: clamp(2rem, 3.6vw, 2.7rem); line-height: 1.05; }
+.score b { font-family: var(--display); font-size: clamp(2rem, 3.6vw, 2.6rem); line-height: 1.05; color: var(--ink); }
 .score > span { font-size: .86rem; color: var(--muted); }
-.score.hot { background: linear-gradient(150deg, rgba(255, 111, 168, .28), rgba(28, 14, 37, .85)); border-color: rgba(255, 140, 188, .4); }
-.verdict { margin-top: clamp(.9rem, 1.8vw, 1.4rem); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .9rem; align-items: start; }
+.score.hot { background: var(--ink); border-color: var(--ink); }
+.score.hot b { color: var(--surface); } .score.hot > span { color: #d9cce3; }
+.verdict { margin-top: clamp(.9rem, 1.8vw, 1.2rem); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .9rem; align-items: start;
+  background: #fde6ef; border-color: #f5b9d1; }
 
 .site-wrap { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
 .site { display: grid; gap: 1rem; }
@@ -178,33 +180,33 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 32px; cu
 .site h3 { font-family: var(--mono); font-size: 1.05rem; letter-spacing: 0; font-weight: 700; display: flex; align-items: center; gap: .55rem; }
 .site dl { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .7rem 1rem; margin: 0; align-items: center; font-size: .94rem; }
 .site dt { color: var(--muted); }
-.site dd { margin: 0; font-family: var(--mono); font-size: .88rem; overflow-wrap: anywhere; }
-.chip { font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: .25rem .65rem; border-radius: 999px; white-space: nowrap; justify-self: start; }
-.chip.safe { background: rgba(111, 227, 176, .14); color: var(--good); }
-.chip.broken { background: rgba(255, 122, 165, .16); color: var(--bad); }
+.site dd { margin: 0; font-family: var(--mono); font-size: .88rem; overflow-wrap: anywhere; color: var(--violet); }
+.chip { font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: .22rem .65rem; border-radius: 999px; white-space: nowrap; justify-self: start; color: var(--surface); }
+.chip.safe { background: var(--good); }
+.chip.broken { background: var(--berry); }
 
 .eng { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: clamp(1.5rem, 4vw, 3rem); margin-top: clamp(2rem, 4vw, 3rem); align-items: start; }
-.term { background: var(--code-bg); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: 0 40px 70px -40px rgba(0, 0, 0, .9); }
-.term-bar { display: flex; gap: 6px; padding: .7rem .9rem; border-bottom: 1px solid var(--line); }
+.term { background: var(--code-bg); border: 1px solid var(--ink); border-radius: var(--radius); overflow: hidden; box-shadow: 0 24px 50px -30px rgba(var(--shadow), .7); }
+.term-bar { display: flex; gap: 6px; padding: .7rem .9rem; border-bottom: 1px solid rgba(255, 255, 255, .1); }
 .term-bar i { width: 10px; height: 10px; border-radius: 50%; }
-.term-bar i:first-child { background: var(--bad); } .term-bar i:nth-child(2) { background: var(--sun); } .term-bar i:nth-child(3) { background: var(--good); }
+.term-bar i:first-child { background: var(--accent); } .term-bar i:nth-child(2) { background: var(--sun); } .term-bar i:nth-child(3) { background: #4fc79a; }
 .code { margin: 0; padding: 1.1rem 1.3rem 1.3rem; overflow-x: auto; font-family: var(--mono); font-size: .86rem; line-height: 1.85; color: #f6eefa; }
 .code span { display: block; white-space: pre; }
-.code .c { color: #a995cf; } .code .p { color: var(--accent); font-weight: 400; }
+.code .c { color: #b9a6dd; } .code .p { color: #ff8cbc; font-weight: 400; }
 .bars { display: grid; gap: .85rem; margin: 0; padding: 0; list-style: none; }
 .bars li { display: grid; gap: .35rem; }
 .bars .row { display: flex; justify-content: space-between; gap: 1rem; font-size: .93rem; }
 .bars .row b { font-family: var(--display); font-size: 1.2rem; }
-.bars .track { height: 10px; border-radius: 999px; background: rgba(255, 255, 255, .08); overflow: hidden; }
-.bars .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--lav)); width: var(--w); transform-origin: 0 50%;
-  box-shadow: 0 0 16px rgba(255, 111, 168, .5); }
+.bars .track { height: 10px; border-radius: 999px; background: var(--lav); overflow: hidden; }
+.bars .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--violet)); width: var(--w); transform-origin: 0 50%; }
 .bugs { margin: 1.6rem 0 0; display: grid; gap: .55rem; padding-left: 1.2rem; color: var(--muted); }
 .bugs li::marker { color: var(--accent); }
 
-.cta { text-align: center; display: grid; justify-items: center; gap: 1.3rem; }
-.cta p { margin-inline: auto; }
+.cta { display: grid; justify-items: start; gap: 1.3rem; max-width: 620px; }
+@media (max-width: 1023px) { .cta { text-align: center; justify-items: center; max-width: none; } .cta p { margin-inline: auto; } }
 
-footer { border-top: 1px solid var(--line); padding-block: 48px 96px;
+footer { border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1.4rem, 3vw, 2.4rem); margin-bottom: 48px;
+  background: rgba(255, 249, 243, .94); box-shadow: 0 6px 24px -14px rgba(var(--shadow), .35);
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; font-size: .92rem; }
 footer ul { margin: .6rem 0 0; padding-left: 1.1rem; display: grid; gap: .35rem; color: var(--muted); }
 footer .team { display: grid; gap: .4rem; }
@@ -220,9 +222,12 @@ footer .team { display: grid; gap: .4rem; }
   .grid-3, .grid-2 { grid-template-columns: minmax(0, 1fr); }
   footer { grid-template-columns: minmax(0, 1fr); }
 }
+@media (max-width: 1180px) { .hud .detail { display: none; } }
 @media (max-width: 760px) {
   .links { display: none; }
-  .hud .detail { display: none; }
+  .hud .tag { display: none; }
+  .hud.on { padding: .2rem .55rem .2rem .2rem; }
+  .nav.scrolled .brand-name { display: none; }
 }
 @media (max-width: 560px) {
   body { font-size: 16px; }
@@ -259,19 +264,19 @@ footer .team { display: grid; gap: .4rem; }
     <div class="bar">
       <a class="brand" href="#top">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-        Q-Day Time Machine
+        <span class="brand-name">Q-Day Time Machine</span>
       </a>
+      <div class="hud" id="hud" aria-hidden="true">
+        <span class="yr num" id="hud-year">2033</span>
+        <span class="s"><span class="dot" id="hud-rsa-dot"></span><span class="tag">RSA-2048</span> <span class="detail" id="hud-rsa">qubits ready</span></span>
+        <span class="s"><span class="dot" id="hud-ecc-dot"></span><span class="tag">P-256</span> <span class="detail" id="hud-ecc">safe</span></span>
+      </div>
       <nav class="links" aria-label="Sections"><a href="#how">How it works</a><a href="#proof">Hardware proof</a><a href="#engineering">Engineering</a><a href="#team">Team</a></nav>
       <a class="btn primary sm" href="/app/">Launch app</a>
     </div>
   </div>
 </header>
 
-<div class="hud" id="hud" aria-hidden="true">
-  <span class="yr num" id="hud-year">2033</span>
-  <span class="s"><span class="dot" id="hud-rsa-dot"></span>RSA-2048 <span class="detail" id="hud-rsa">qubits ready</span></span>
-  <span class="s"><span class="dot" id="hud-ecc-dot"></span>P-256 <span class="detail" id="hud-ecc">safe</span></span>
-</div>
 
 <div class="page" id="top">
   <section class="hero">
@@ -424,7 +429,7 @@ footer .team { display: grid; gap: .4rem; }
       <div class="wrap">
         <div class="section-head" data-reveal>
           <div class="eyebrow"><b>05</b> Engineering</div>
-          <h2 id="eng-title"><em>968</em> tests and a tool you can put in CI.</h2>
+          <h2 id="eng-title"><em>969</em> tests and a tool you can put in CI.</h2>
         </div>
         <div class="eng">
           <div class="stack" data-reveal>
@@ -434,7 +439,7 @@ footer .team { display: grid; gap: .4rem; }
             </div>
             <p class="note">96% line coverage · lint with security rules · CI on Python 3.11 and 3.12 · non-root Docker image</p>
           </div>
-          <div data-reveal>
+          <div class="card" data-reveal>
             <ul class="bars">
               <li><div class="row"><span>Exhaustive quantum</span><b class="num">272</b></div><div class="track"><div class="fill" style="--w:100%"></div></div></li>
               <li><div class="row"><span>Post-quantum, CLI, dashboard, golden results</span><b class="num">196</b></div><div class="track"><div class="fill" style="--w:72%"></div></div></li>
@@ -454,12 +459,12 @@ footer .team { display: grid; gap: .4rem; }
     </section>
 
     <section aria-labelledby="cta-title">
-      <div class="wrap cta" data-reveal>
+      <div class="wrap"><div class="cta" data-reveal>
         <div class="eyebrow"><b>2050</b> End of the line</div>
         <h2 id="cta-title">Know your <em>Q-Day</em> before it knows you.</h2>
         <p class="lede">Scan a site or a codebase, see the year each algorithm falls, and get the post-quantum replacement.</p>
         <div class="actions"><a class="btn primary" href="/app/" data-magnet>Launch the app</a><a class="btn ghost" href="#top" data-magnet>Fly back to 2026</a></div>
-      </div>
+      </div></div>
     </section>
   </main>
 
@@ -588,10 +593,10 @@ const text = (parent, x, y, s, anchor = "middle") => { const t = el("text", { x,
 const H = 300, B = 248, TOP = 30, L = 44;
 const shor = [1097, 46, 817, 45, 1019, 40, 892, 44], ideal = new Set([0, 2, 4, 6]);
 const sweep = [
-  ["theory", [0.125, 0.781, 0.945, 0.33, 0.012], "#c2b1cf", "5 5"],
-  ["ibm_kingston", [0.121, 0.567, 0.681, 0.202, 0.067], "#ff6fa8", ""],
-  ["ibm_fez", [0.118, 0.653, 0.589, 0.279, 0.091], "#b7a2f2", ""],
-  ["ibm_marrakesh", [0.125, 0.257, 0.218, 0.158, 0.14], "#f4c84e", ""],
+  ["theory", [0.125, 0.781, 0.945, 0.33, 0.012], "#756879", "5 5"],
+  ["ibm_kingston", [0.121, 0.567, 0.681, 0.202, 0.067], "#e85291", ""],
+  ["ibm_fez", [0.118, 0.653, 0.589, 0.279, 0.091], "#392045", ""],
+  ["ibm_marrakesh", [0.125, 0.257, 0.218, 0.158, 0.14], "#e0a91f", ""],
 ];
 const played = { shor: !motion, grover: !motion };
 
@@ -608,9 +613,9 @@ function drawShor() {
   shor.forEach((v, i) => {
     const x = L + i * colW + (colW - bw) / 2, yTop = yy(v), hot = ideal.has(i);
     const g = el("g", {}, sv);
-    el("polygon", { points: `${x + bw},${yTop} ${x + bw + depth},${yTop - depth * .6} ${x + bw + depth},${B - depth * .6} ${x + bw},${B}` }, g, { fill: hot ? "#a3305f" : "#5a4a8f" });
-    el("polygon", { points: `${x},${yTop} ${x + depth},${yTop - depth * .6} ${x + bw + depth},${yTop - depth * .6} ${x + bw},${yTop}` }, g, { fill: hot ? "#ffb3d2" : "#cfc2f7" });
-    el("rect", { x, y: yTop, width: bw, height: B - yTop }, g, { fill: hot ? "#ff6fa8" : "#9c86e0" });
+    el("polygon", { points: `${x + bw},${yTop} ${x + bw + depth},${yTop - depth * .6} ${x + bw + depth},${B - depth * .6} ${x + bw},${B}` }, g, { fill: hot ? "#b3245e" : "#b9a6dd" });
+    el("polygon", { points: `${x},${yTop} ${x + depth},${yTop - depth * .6} ${x + bw + depth},${yTop - depth * .6} ${x + bw},${yTop}` }, g, { fill: hot ? "#f7a8c8" : "#ece6fd" });
+    el("rect", { x, y: yTop, width: bw, height: B - yTop }, g, { fill: hot ? "#e85291" : "#dcd2fa" });
     bars.push(g);
     text(sv, x + bw / 2, B + 20, String(i));
     if (hot) vals.push(text(sv, x + bw / 2 + depth / 2, yTop - depth - 4, String(v)));
@@ -708,10 +713,6 @@ if (motion) {
       b.addEventListener("pointermove", e => { const r = b.getBoundingClientRect(); xTo((e.clientX - r.left - r.width / 2) * .3); yTo((e.clientY - r.top - r.height / 2) * .4); });
       b.addEventListener("pointerleave", () => { xTo(0); yTo(0); });
     }
-    const panel = $("panel");
-    const rx = gsap.quickTo(panel, "rotationX", { duration: .8, ease: "power3" }), ry = gsap.quickTo(panel, "rotationY", { duration: .8, ease: "power3" });
-    panel.addEventListener("pointermove", e => { const r = panel.getBoundingClientRect(); ry(((e.clientX - r.left) / r.width - .5) * 8); rx(-((e.clientY - r.top) / r.height - .5) * 6); });
-    panel.addEventListener("pointerleave", () => { rx(0); ry(0); });
   }
 }
 updatePanel(); updateChrome();
@@ -725,82 +726,107 @@ async function initScene() {
   try { THREE = await import(THREE_URL); } catch { return; }
   const canvas = $("scene");
   let renderer;
-  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" }); } catch { return; }
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" }); } catch { return; }
   const small = innerWidth < 760;
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.5 : 1.75));
-  renderer.setClearColor(0x0b0510, 1);
+  renderer.setClearColor(0xf4efff, 0);  // transparent: the page's lavender grid shows through
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
   const world = new THREE.Scene();
-  world.fog = new THREE.FogExp2(0x0b0510, 0.024);
+  world.fog = new THREE.Fog(0xf4efff, 16, 72);  // distant rings melt into the page background
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
-  const ADD = THREE.AdditiveBlending;
-  const basic = o => new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: o, blending: ADD, depthWrite: false });
 
-  const dotCanvas = document.createElement("canvas"); dotCanvas.width = dotCanvas.height = 64;
-  const dc = dotCanvas.getContext("2d"), grad = dc.createRadialGradient(32, 32, 0, 32, 32, 32);
-  grad.addColorStop(0, "rgba(255,255,255,1)"); grad.addColorStop(.25, "rgba(255,255,255,.6)"); grad.addColorStop(1, "rgba(255,255,255,0)");
-  dc.fillStyle = grad; dc.fillRect(0, 0, 64, 64);
-  const dotTex = new THREE.CanvasTexture(dotCanvas);
+  // lights: soft lavender sky, a white key light, and pink / violet lights that travel with the camera
+  world.add(new THREE.HemisphereLight(0xffffff, 0xcdbff5, 1.5));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+  sun.position.set(6, 10, 12);
+  world.add(sun);
+  const pinkLight = new THREE.PointLight(0xff7ab2, 120, 45, 2);
+  const violetLight = new THREE.PointLight(0x8f72e0, 90, 45, 2);
+  world.add(pinkLight, violetLight);
 
   try { await document.fonts.load("600 80px Fraunces"); } catch {}
   const label = y => {
     const c = document.createElement("canvas"); c.width = 256; c.height = 112;
     const x = c.getContext("2d"); x.font = "600 84px Fraunces, Georgia, serif"; x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillStyle = "#f8f0fb"; x.fillText(String(y), 128, 60);
+    x.fillStyle = "#392045"; x.fillText(String(y), 128, 60);
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
     s.scale.set(1.5, 0.66, 1); return s;
   };
 
-  const outerGeo = new THREE.TorusGeometry(4, 0.035, 6, 200), outerHalo = new THREE.TorusGeometry(4, 0.2, 8, 120);
-  const innerGeo = new THREE.TorusGeometry(2.7, 0.03, 6, 160), innerHalo = new THREE.TorusGeometry(2.7, 0.16, 8, 100);
-  const tickPts = [];
-  for (let k = 0; k < 36; k++) { const a = k / 36 * Math.PI * 2, r0 = k % 3 === 0 ? 4.25 : 4.12; tickPts.push(Math.cos(a) * r0, Math.sin(a) * r0, 0, Math.cos(a) * 4.45, Math.sin(a) * 4.45, 0); }
-  const tickGeo = new THREE.BufferGeometry(); tickGeo.setAttribute("position", new THREE.Float32BufferAttribute(tickPts, 3));
-
+  // year rings: glossy tori with a notched bezel, colored by what a machine of that year can break
+  const [radial, tubular] = small ? [10, 96] : [18, 180];
+  const outerGeo = new THREE.TorusGeometry(4, 0.13, radial, tubular);
+  const innerGeo = new THREE.TorusGeometry(2.7, 0.1, radial, tubular);
+  const notchGeo = new THREE.BoxGeometry(0.07, 0.34, 0.07);
+  const NOTCHES = 24, holder = new THREE.Object3D();
+  const gloss = () => new THREE.MeshStandardMaterial({ roughness: .26, metalness: .35, emissiveIntensity: .12, transparent: true });
   const rings = YEARS.map((y, i) => {
     const g = new THREE.Group(); g.position.z = ringZ(i);
-    const o = new THREE.Mesh(outerGeo, basic(.95)), oh = new THREE.Mesh(outerHalo, basic(.08));
-    const n = new THREE.Mesh(innerGeo, basic(.95)), nh = new THREE.Mesh(innerHalo, basic(.08));
-    const t = new THREE.LineSegments(tickGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: .45, blending: ADD, depthWrite: false }));
+    const o = new THREE.Mesh(outerGeo, gloss()), n = new THREE.Mesh(innerGeo, gloss());
+    const notches = new THREE.InstancedMesh(notchGeo, new THREE.MeshStandardMaterial({ color: 0x392045, roughness: .4, metalness: .5, transparent: true }), NOTCHES);
+    for (let k = 0; k < NOTCHES; k++) {
+      const a = k / NOTCHES * Math.PI * 2;
+      holder.position.set(Math.cos(a) * 4.42, Math.sin(a) * 4.42, 0);
+      holder.rotation.set(0, 0, a - Math.PI / 2);
+      holder.scale.setScalar(k % 6 === 0 ? 1.6 : 1);
+      holder.updateMatrix(); notches.setMatrixAt(k, holder.matrix);
+    }
     const l = label(y); l.position.set(0, 3.35, 0);
-    g.add(o, oh, n, nh, t, l); world.add(g);
-    return { g, o, oh, n, nh, t, l };
+    g.add(o, n, notches, l); world.add(g);
+    return { g, o, n, notches, l, phase: Math.random() * Math.PI * 2 };
   });
-  const COL = { safe: new THREE.Color("#6fe3b0"), ready: new THREE.Color("#f4c84e"), broken: new THREE.Color("#ff6fa8") };
+  const COL = { safe: new THREE.Color("#2f8f6b"), ready: new THREE.Color("#e0a91f"), broken: new THREE.Color("#e85291") };
   function recolor() {
     rings.forEach((r, i) => {
-      const m = machine(YEARS[i]), a = COL[status(RSA, m)], b = COL[status(ECC, m)];
-      r.o.material.color.copy(a); r.oh.material.color.copy(a); r.t.material.color.copy(a);
-      r.n.material.color.copy(b); r.nh.material.color.copy(b);
+      const m = machine(YEARS[i]);
+      for (const [mesh, req] of [[r.o, RSA], [r.n, ECC]]) {
+        const c = COL[status(req, m)];
+        mesh.material.color.copy(c); mesh.material.emissive.copy(c);
+      }
     });
   }
   recolor();
 
-  const N = small ? 1100 : 2600, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
-  const depthAll = SPACING * YEARS.length + 30;
-  for (let i = 0; i < N; i++) {
-    const a = Math.random() * Math.PI * 2, r = 1.2 + Math.pow(Math.random(), .6) * 14;
-    pos.set([Math.cos(a) * r, Math.sin(a) * r, 12 - Math.random() * depthAll], i * 3);
-    const k = Math.random();
-    col.set(k < .14 ? [1, .44, .66] : k < .22 ? [.96, .78, .3] : [.82, .76, 1], i * 3);
-  }
-  const pg = new THREE.BufferGeometry();
-  pg.setAttribute("position", new THREE.BufferAttribute(pos, 3)); pg.setAttribute("color", new THREE.BufferAttribute(col, 3));
-  const points = new THREE.Points(pg, new THREE.PointsMaterial({ size: small ? .12 : .1, map: dotTex, vertexColors: true, transparent: true, opacity: .9, blending: ADD, depthWrite: false }));
-  world.add(points);
+  // shockwave: a ring that bursts outward from the chosen year when it changes
+  const wave = new THREE.Mesh(new THREE.TorusGeometry(4, 0.06, 8, 160),
+                              new THREE.MeshBasicMaterial({ color: 0xe85291, transparent: true, opacity: 0, depthWrite: false }));
+  world.add(wave);
+  let waveT = 1;
 
-  // Q-Day core at the end of the tunnel
+  // qubit gems: faceted crystals drifting and spinning through the tunnel
+  const GEMS = small ? 70 : 170, depthAll = SPACING * YEARS.length + 20;
+  const gems = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.17, 0),
+                                       new THREE.MeshStandardMaterial({ roughness: .18, metalness: .45, flatShading: true }), GEMS);
+  const gemData = Array.from({ length: GEMS }, () => ({
+    a: Math.random() * Math.PI * 2, r: 1.1 + Math.random() * 2.3,  // inside the tunnel, clear of the page text
+    z: 8 - Math.random() * depthAll, w: (Math.random() - .5) * .35, spin: .4 + Math.random() * 1.2,
+    s: .6 + Math.random() * 1.1, bob: Math.random() * Math.PI * 2,
+  }));
+  const GEM_COLORS = ["#e85291", "#7a5cb8", "#f4c84e", "#392045", "#2f8f6b", "#f7a8c8"].map(c => new THREE.Color(c));
+  gemData.forEach((_, i) => gems.setColorAt(i, GEM_COLORS[i % GEM_COLORS.length]));
+  world.add(gems);
+
+  // Q-Day core at the end of the tunnel: a faceted crystal in a wire cage, circled by three electrons
   const core = new THREE.Group(); core.position.z = ringZ(YEARS.length - 1) - 9;
-  const wire = new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(2.3, 1)), new THREE.LineBasicMaterial({ color: 0xff6fa8, transparent: true, opacity: .8, blending: ADD, depthWrite: false }));
-  const shell = new THREE.Mesh(new THREE.IcosahedronGeometry(1.25, 2), new THREE.MeshBasicMaterial({ color: 0xb7a2f2, transparent: true, opacity: .35, blending: ADD, depthWrite: false, wireframe: true }));
-  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: 0xff6fa8, transparent: true, opacity: .55, blending: ADD, depthWrite: false }));
-  glow.scale.set(11, 11, 1);
-  core.add(glow, wire, shell); world.add(core);
+  const crystal = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 0), new THREE.MeshStandardMaterial({
+    color: 0xe85291, emissive: 0xb3245e, emissiveIntensity: .3, roughness: .2, metalness: .35, flatShading: true, transparent: true }));
+  const cage = new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(2.5, 1)),
+                                     new THREE.LineBasicMaterial({ color: 0x392045, transparent: true, opacity: .45 }));
+  const orbits = [0, 1, 2].map(k => {
+    const o = new THREE.Group(); o.rotation.set(k * 1.05 + .4, k * .7, 0);
+    o.add(new THREE.Mesh(new THREE.TorusGeometry(3.3, 0.018, 6, 120), new THREE.MeshBasicMaterial({ color: 0x7a5cb8, transparent: true, opacity: .5 })));
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), new THREE.MeshStandardMaterial({ color: [0xf4c84e, 0x7a5cb8, 0x2f8f6b][k], roughness: .25, metalness: .4 }));
+    e.position.x = 3.3; o.add(e); core.add(o); return o;
+  });
+  const coreLight = new THREE.PointLight(0xff8cbc, 60, 20, 2);
+  core.add(crystal, cage, coreLight); world.add(core);
 
   function resize() {
     const w = innerWidth, h = innerHeight;
     renderer.setSize(w, h, false);
     // put the vanishing point in open space: upper right beside the headline on desktop, above it on narrow screens
-    const wide = w >= 1024, fx = wide ? .7 : .5, fy = wide ? .36 : .2;
+    const wide = w >= 1024, fx = wide ? .72 : .5, fy = wide ? .36 : .2;
     camera.aspect = w / h; camera.fov = w / h < .8 ? 70 : 58;
     camera.setViewOffset(w, h, -(fx - .5) * w, -(fy - .5) * h, w, h);
   }
@@ -814,25 +840,52 @@ async function initScene() {
     camZ = reduce ? target : camZ + (target - camZ) * Math.min(1, dt * 3.2);
     pmx += (mx - pmx) * Math.min(1, dt * 2.5); pmy += (my - pmy) * Math.min(1, dt * 2.5);
     const sx = reduce ? 0 : Math.sin(p * Math.PI * 2) * 1.4, sy = reduce ? 0 : Math.sin(p * Math.PI * 3) * .55;
-    camera.position.set(sx + pmx * 1.1, sy - pmy * .8, camZ);
-    camera.lookAt(sx * .3, sy * .3, camZ - 14);
+    camera.position.set(sx + pmx * 1.8, sy - pmy * 1.2, camZ);
+    camera.lookAt(sx * .3 - pmx * .6, sy * .3 + pmy * .4, camZ - 14);
     camera.rotateZ(reduce ? 0 : p * .7 + Math.sin(t * .25) * .03);
+    pinkLight.position.set(camera.position.x + 3, camera.position.y + 2.5, camZ - 7);
+    violetLight.position.set(camera.position.x - 3.5, camera.position.y - 2, camZ - 12);
 
-    const focus = Math.round((CAM_OFFSET - camZ) / SPACING), dim = 1 - .32 * Math.min(1, scrollY / innerHeight);
+    // past the hero the tunnel becomes a quiet backdrop: rings fade and the year numbers leave the text alone
+    const past = Math.min(1, scrollY / (innerHeight * .7));
+    const focus = Math.round((CAM_OFFSET - camZ) / SPACING), dim = 1 - .62 * past;
     rings.forEach((r, i) => {
-      const d = camZ - r.g.position.z, near = Math.min(1, Math.max(0, (d - .6) / 2.5));
+      const d = camZ - r.g.position.z, near = Math.min(1, Math.max(0, (d - 2.2) / 2.5));  // rings beside the camera fade out
       const on = i === focus ? 1 : 0;
-      r.o.material.opacity = (.55 + .45 * on) * near * dim;
-      r.n.material.opacity = (.5 + .5 * on) * near * dim;
-      r.oh.material.opacity = (.05 + .17 * on) * near * dim;
-      r.nh.material.opacity = (.04 + .14 * on) * near * dim;
-      r.t.material.opacity = .4 * near * dim;
-      r.l.material.opacity = (.35 + .65 * on) * near * Math.max(0, 1 - (d - CAM_OFFSET) / 26);
-      r.t.rotation.z = t * (i % 2 ? .12 : -.09) + i * .3;
+      const alpha = (.82 + .18 * on) * near * dim;
+      r.o.material.opacity = r.n.material.opacity = alpha;
+      r.o.material.emissiveIntensity = r.n.material.emissiveIntensity = .12 + .45 * on * (.75 + .25 * Math.sin(t * 3));
+      r.notches.material.opacity = alpha * .9;
+      r.notches.rotation.z = t * (i % 2 ? .12 : -.09) + i * .3;
+      r.g.rotation.x = Math.sin(t * .5 + r.phase) * .05;
+      r.g.rotation.y = Math.cos(t * .4 + r.phase) * .05;
+      r.g.scale.setScalar(1 + on * .025 * Math.sin(t * 3));
+      r.l.material.opacity = (.35 + .65 * on) * near * Math.max(0, 1 - (d - CAM_OFFSET) / 26) * (1 - past);
     });
-    points.rotation.z = t * .015;
-    wire.rotation.set(t * .3, t * .4, 0); shell.rotation.set(-t * .5, t * .2, 0);
-    glow.material.opacity = .45 + .15 * Math.sin(t * 2);
+
+    if (waveT < 1) {
+      waveT = Math.min(1, waveT + dt / 1.3);
+      const i = YEARS.indexOf(year), e = 1 - Math.pow(1 - waveT, 3);
+      wave.position.z = ringZ(i);
+      wave.scale.setScalar(1 + e * 1.8);
+      wave.material.color.copy(COL[status(RSA, machine(year))]);
+      wave.material.opacity = (1 - waveT) * .85 * dim;
+    }
+
+    gemData.forEach((g, i) => {
+      const a = g.a + t * g.w;
+      holder.position.set(Math.cos(a) * g.r, Math.sin(a) * g.r + Math.sin(t + g.bob) * .15, g.z);
+      holder.rotation.set(t * g.spin, t * g.spin * .7, 0);
+      const ahead = camZ - g.z;  // gems right next to the camera would fly across the text: fade them in with distance
+      holder.scale.setScalar(g.s * (1 - .35 * past) * Math.min(1, Math.max(0, (ahead - 2.5) / 3)));
+      holder.updateMatrix(); gems.setMatrixAt(i, holder.matrix);
+    });
+    gems.instanceMatrix.needsUpdate = true;
+
+    crystal.rotation.set(t * .35, t * .5, 0);
+    cage.rotation.set(-t * .2, t * .15, 0);
+    orbits.forEach((o, k) => { o.rotation.z = t * (.6 + k * .25); });
+    crystal.material.opacity = 1 - .4 * past; cage.material.opacity = .45 - .2 * past;
     renderer.render(world, camera);
     canvas.classList.add("ready");
   }
@@ -844,7 +897,7 @@ async function initScene() {
     const run = () => renderer.setAnimationLoop(document.hidden ? null : render);
     run(); document.addEventListener("visibilitychange", run);
   }
-  scene = { recolor, poke: () => { if (reduce) requestAnimationFrame(render); } };
+  scene = { recolor, poke: () => { if (reduce) requestAnimationFrame(render); else waveT = 0; } };
 }
 const later = window.requestIdleCallback ? fn => requestIdleCallback(fn, { timeout: 800 }) : fn => setTimeout(fn, 200);
 if (document.readyState === "complete") later(initScene);

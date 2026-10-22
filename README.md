@@ -286,7 +286,7 @@ vtu-hc-straw-hat-pirates/
 ├── scripts/                  # IBM hardware runs: first run, 3-backend suite, strict suite
 ├── results/                  # raw hardware counts and reports
 ├── samples/legacy_app/       # deliberately vulnerable sample code for the scanner demo
-├── tests/                    # 968 tests
+├── tests/                    # 969 tests
 └── .github/workflows/ci.yml  # lint + tests on Python 3.11 and 3.12
 ```
 
@@ -369,7 +369,7 @@ python scripts/hardware_strict.py submit --backend ibm_kingston --repeat
 ### 5. Run the tests
 
 ```bash
-pytest -m "not network and not hardware"   # 966 offline tests
+pytest -m "not network and not hardware"   # 967 offline tests
 pytest -m network                          # 2 live checks against our own site
 ```
 
@@ -377,7 +377,7 @@ pytest -m network                          # 2 live checks against our own site
 
 ## 🧪 Testing
 
-**968 tests, 96% line coverage.**
+**969 tests, 96% line coverage.**
 
 | Type | Tests | What it proves |
 | :--- | :--- | :--- |
@@ -392,7 +392,7 @@ pytest -m network                          # 2 live checks against our own site
 | Golden results | 26 | Every hardware claim in this README recomputed from the raw counts |
 | Config and runner | 26 | Credential precedence, `.env` parsing, the token never printed, backend selection, batching |
 | End-to-end app (AppTest) | 24 | The real dashboard driven headlessly: nothing prefilled, settings reset, every tab, the step-through view, bad inputs |
-| quantum-debugger integration | 66 | Every Shor base of 15 and every 3-bit Grover key agree with Qiskit; step-through matches the sin² law for every key; the oracle flips only the key's sign and the diffuser reflects about the mean; lossy conversion is refused |
+| quantum-debugger integration | 67 | Every Shor base of 15 and every 3-bit Grover key agree with Qiskit; step-through matches the sin² law for every key; the oracle flips only the key's sign and the diffuser reflects about the mean; lossy conversion is refused |
 | Statistics and strict criteria | 27 | Pass rules accept good data and reject noise, on synthetic distributions |
 | One-port server (`serve.py`) | 16 | Cookies, bodies, redirects, gzip, websocket subprotocols, >4 MB messages, 502 when the dashboard is down |
 | Performance | 4 | 1,500-file scan < 15 s; 10,000 assets assessed < 3 s |

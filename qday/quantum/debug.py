@@ -42,10 +42,21 @@ def to_debugger(circuit: QuantumCircuit):
     return converted, basic
 
 
+def _start_state(num_qubits: int):
+    """|0...0> on quantum-debugger's NumPy backend.
+
+    The default backend ("auto") picks Numba or the GPU, which compiles kernels on first use (~8 s in a fresh
+    server process) for no gain on circuits of a few qubits.
+    """
+    from quantum_debugger import QuantumState
+
+    return QuantumState(num_qubits, backend="numpy")
+
+
 def _final_state(qd_circuit, initial=None):
     from quantum_debugger import QuantumDebugger
 
-    dbg = QuantumDebugger(qd_circuit, initial)
+    dbg = QuantumDebugger(qd_circuit, initial or _start_state(qd_circuit.num_qubits))
     dbg.run_to_end()
     return dbg.get_state()
 
@@ -61,16 +72,20 @@ def cross_check(circuit: QuantumCircuit) -> dict:
             "max_abs_diff": diff, "fidelity": fidelity, "agree": diff < AGREE_TOL}
 
 
-def real_amplitudes(state, key: int) -> list:
+def real_amplitudes(state, key: int, previous: list = None) -> list:
     """Amplitudes with the global phase removed, so Grover's sign flips show as negative bars.
 
-    The S-box gates add a global phase; it is fixed by making the other keys' total amplitude positive
-    (or, when they have all but vanished, the key's own amplitude).
+    Each block carries an arbitrary global phase (the S-box synthesis adds one), so a convention is needed:
+    after the Hadamards and every diffuser the secret key is drawn positive; after an oracle the other keys
+    keep the signs they had at the previous stop (``previous``), so the oracle shows as a flip of the key alone.
     """
     vec = state.state_vector
     vec = np.asarray(vec.get() if hasattr(vec, "get") else vec, dtype=complex)  # CuPy arrays live on the GPU
-    others = vec.sum() - vec[key]
-    ref = others if abs(others) > 1e-9 else vec[key]
+    if previous is not None:
+        others = np.arange(len(vec)) != key
+        ref = np.sum(np.asarray(previous)[others] * vec[others])
+    else:
+        ref = vec[key] if abs(vec[key]) > 1e-9 else vec.sum()
     return (vec * np.exp(-1j * np.angle(ref))).real.tolist()
 
 
@@ -90,7 +105,7 @@ def grover_trace(plaintext: int, key: int, iterations: int, n_bits: int = 3) -> 
         blocks += [(f"Oracle {i}", oracle(plaintext, ciphertext, n_bits)), (f"Diffuser {i}", diffuser(n_bits))]
 
     steps, p_key, markers = [0], [1.0 if key == 0 else 0.0], []
-    state = None
+    state = _start_state(n_bits)
     for label, block in blocks:
         qd_circuit, _ = to_debugger(block)
         dbg = QuantumDebugger(qd_circuit, state)
@@ -98,8 +113,9 @@ def grover_trace(plaintext: int, key: int, iterations: int, n_bits: int = 3) -> 
             steps.append(steps[-1] + 1)
             p_key.append(float(dbg.current_state.get_probabilities()[key]))
         state = dbg.get_state()
+        previous = markers[-1]["amplitudes"] if label.startswith("Oracle") else None
         markers.append({"label": label, "step": steps[-1], "p_key": p_key[-1],
-                        "amplitudes": real_amplitudes(state, key)})
+                        "amplitudes": real_amplitudes(state, key, previous)})
 
     # iteration 0 is the state after the Hadamards; iteration i ends with diffuser i
     after_iteration = [markers[0]["p_key"]] + [m["p_key"] for m in markers if m["label"].startswith("Diffuser")]

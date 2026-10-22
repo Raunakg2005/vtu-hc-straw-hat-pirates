@@ -117,7 +117,10 @@ def start_dashboard(port: int) -> subprocess.Popen:
     cmd = [sys.executable, "-m", "streamlit", "run", str(ROOT / "app.py"),
            "--server.address", "127.0.0.1", "--server.port", str(port),
            "--server.baseUrlPath", APP_PATH.strip("/"), "--server.headless", "true",
-           "--browser.gatherUsageStats", "false"]
+           "--browser.gatherUsageStats", "false",
+           # no code reloading in production: the watcher walks every loaded module (Qiskit, Numba, ...) for each
+           # new visitor, which stalled page loads by ~10 s
+           "--server.fileWatcherType", "none", "--server.runOnSave", "false"]
     return subprocess.Popen(cmd, cwd=ROOT, env=os.environ.copy())
 
 
