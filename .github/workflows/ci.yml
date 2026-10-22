@@ -27,3 +27,16 @@ jobs:
           set +e
           qday scan --path samples/legacy_app --fail-on critical
           test $? -eq 1
+      - name: Results document matches the raw hardware data
+        run: python scripts/summarize_results.py --check
+
+  secrets:
+    # Fails on any live (verified) credential in the history; the sample app's fake keys are not live
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: trufflesecurity/trufflehog@v3.97.9
+        with:
+          extra_args: --only-verified

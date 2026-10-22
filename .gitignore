@@ -69,3 +69,6 @@ demo_video/
 
 # presentation build workspace and renders (the deck is shared separately)
 presentation/
+
+# private: rehearsal notes for the live Q&A
+docs/judge-qa.md
