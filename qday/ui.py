@@ -301,6 +301,12 @@ def hero(st, eyebrow_text, title_html, subtitle):
                 f'<h1>{title_html}</h1><p>{subtitle}</p></div>', unsafe_allow_html=True)
 
 
+def sci(value: float, decimals: int = 0) -> str:
+    """2.4e8 -> '2×10⁸'; sci(3.06e-3, 1) -> '3.1×10⁻³' (superscript exponent)."""
+    mantissa, exponent = f"{value:.{decimals}e}".split("e")
+    return f"{mantissa}×10{str(int(exponent)).translate(str.maketrans('-0123456789', '⁻⁰¹²³⁴⁵⁶⁷⁸⁹'))}"
+
+
 def stat_cards(st, cards):
     """cards: list of (label, value, sub_html, variant) with variant in '', 'pink', 'lav', 'yel'."""
     items = "".join(

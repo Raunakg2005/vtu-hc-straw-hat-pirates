@@ -204,3 +204,11 @@ def test_inside_the_circuit_steps_through_grover_with_quantum_debugger():
     at.slider(key="trace_iters_4").set_value(3).run()
     assert not at.exception
     assert "96.1%" in page_text(at)  # 4-bit optimum after 3 iterations
+
+
+def test_time_machine_shows_the_hardware_calibrated_forecast():
+    at = fresh()
+    text = page_text(at)
+    assert "Calibrated by our hardware runs" in text
+    assert "3.1×10⁻³" in text and "4.1 M" in text
+    assert "33, 34, 35" in text and "above the ~1% surface-code threshold" in text

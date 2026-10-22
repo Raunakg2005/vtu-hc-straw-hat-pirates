@@ -65,6 +65,12 @@ with st.sidebar:
               width="stretch")
 
 
+@st.cache_data(show_spinner=False)
+def cached_calibration():
+    """Noise measured on our IBM runs (scripts/summarize_results.py writes it)."""
+    return load_result("noise_calibration.json")
+
+
 @st.cache_data(show_spinner=False, ttl=3600)
 def cached_tls(host):
     return scan_tls(host)
@@ -257,6 +263,33 @@ with tab_time:
                  badge_cols=("status_in_year",), code_cols=("location",))
         st.caption("Toffoli counts are compared directly with IBM's gate counts, which favours the attacker, "
                    "so these dates lean early. Every estimate is cited under Sources.")
+
+    # ------------------------------------------------ the same forecast, calibrated by our own hardware runs
+    cal = cached_calibration()
+    if cal:
+        best, median = cal["forecast"]["best_measured"], cal["forecast"]["median_measured"]
+        bad = cal["machines"]["ibm_marrakesh"]
+        ui.section(st, "Calibrated by our hardware runs",
+                   "What our measured noise means for <em style='color:#e85291'>RSA-2048</em>.",
+                   "The published estimate assumes an error of 10⁻³ per operation. We measured the effective error "
+                   "per two-qubit gate from every Grover run on three IBM quantum computers.")
+        ui.stat_cards(st, [
+            ("Best measured qubits", ui.sci(best["eps"], 1), "error per two-qubit gate, 3× the paper's assumption",
+             "lav"),
+            ("RSA-2048 needs", f"{best['physical_qubits'] / 1e6:.1f} M",
+             f"physical qubits at that error (paper: under 1 M), code distance {best['distance']}", "pink"),
+            ("Without error correction", f"{ui.sci(best['improvement_needed_without_qec'])}×",
+             "lower error needed: a direct attack is hopeless", "yel"),
+        ])
+        ui.note(st, f"Placement matters: on <code>ibm_marrakesh</code> the qubits the compiler picked "
+                    f"({', '.join(map(str, bad['worst_qubits']))}) measured <b>{ui.sci(bad['worst'], 1)}</b>, above the "
+                    f"~1% surface-code threshold, where no amount of error correction helps. Qubits "
+                    f"{', '.join(map(str, bad['best_qubits']))} on the same chip measured <b>{ui.sci(bad['best'], 1)}</b>. "
+                    f"At the median measured error ({ui.sci(median['eps'], 1)}) RSA-2048 would need about "
+                    f"<b>{median['physical_qubits'] / 1e6:.1f} million</b> physical qubits.", "warn", "cpu")
+        st.caption("Method: each Grover run's output is fitted as the ideal distribution mixed with uniform noise; "
+                   "error per gate = 1 − F^(1/gates), readout included (an upper bound). Simple surface-code model, "
+                   "scaled to the paper's estimate. Full tables: docs/RESULTS.md.")
 
 
 # ---------------------------------------------------------------- 3 prove it

@@ -11,7 +11,12 @@ VTU-QFF Hackathon — Qiskit Fall Fest 2026
 
 **[▶ Watch the demo (2 min)](https://youtu.be/8AHgcPisYlE)** &nbsp;·&nbsp;
 **[Presentation (PPTX)](docs/Q-Day_Time_Machine_VTU-QFF-HC-0106.pptx)** &nbsp;·&nbsp;
-**[Run it in 3 commands](#quick-start)**
+**[Run it in 3 commands](#quick-start)** &nbsp;·&nbsp;
+**[Full hardware results](docs/RESULTS.md)** &nbsp;·&nbsp;
+**[User guide](docs/USER_GUIDE.md)** &nbsp;·&nbsp;
+**[Architecture](docs/ARCHITECTURE.md)**
+
+[![CI](https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates/actions/workflows/ci.yml/badge.svg)](https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates/actions/workflows/ci.yml)
 
 </div>
 
@@ -23,8 +28,9 @@ VTU-QFF Hackathon — Qiskit Fall Fest 2026
 | :--- | :--- |
 | **Problem** | "Harvest now, decrypt later": recorded traffic protected by RSA and elliptic-curve cryptography becomes readable once a large quantum computer exists. Teams can't say which systems break first, or when. |
 | **What we built** | A scanner, a year-by-year break forecast against IBM's quantum roadmap, Shor and Grover attacks run on real IBM hardware, and the NIST post-quantum fix, in one dashboard and CLI. |
-| **Hardware proof** | **45 / 45** validation tests passed on **ibm_fez, ibm_kingston and ibm_marrakesh**; Shor factored 15 = 3 × 5 on every machine (24 / 24 strict tests). |
-| **Engineering** | **969 tests**, 96% line coverage, CI on Python 3.11 and 3.12, Docker image, `qday` CLI that can gate CI. |
+| **Hardware proof** | **45 / 45** validation tests passed on **ibm_fez, ibm_kingston and ibm_marrakesh**; Shor factored 15 = 3 × 5 on every machine (24 / 24 strict tests). 8 jobs, 163 s of QPU time, every job ID listed. |
+| **Our finding** | We measured the error per two-qubit gate on all three machines: **~3 × 10⁻³ on the best qubits**, three times the published RSA-2048 estimate's assumption, so the attack would need **~4 million** physical qubits rather than under 1 million. A compiler's default qubits can sit **above the error-correction threshold**. [Details](#hardware-calibrated-q-day). |
+| **Engineering** | **998 tests**, 96% line coverage, CI on Python 3.11 and 3.12 with a secret scan, Docker image, `qday` CLI that can gate CI. |
 | **Our library** | [quantum-debugger](https://pypi.org/project/quantum-debugger/) re-simulates every attack circuit as an independent check on Qiskit and powers a gate-by-gate step-through view. |
 
 ---
@@ -36,6 +42,8 @@ VTU-QFF Hackathon — Qiskit Fall Fest 2026
 - [Screenshots](#screenshots)
 - [How it works](#how-it-works)
 - [Results on IBM quantum hardware](#results-on-ibm-quantum-hardware)
+- [What real hardware taught us](#what-real-hardware-taught-us)
+- [Hardware-calibrated Q-Day](#hardware-calibrated-q-day)
 - [Quick start](#quick-start)
 - [Command line](#command-line)
 - [Testing](#testing)
@@ -77,8 +85,9 @@ order or a proof.
 | **6. Migrate** | Live hybrid **X25519 + ML-KEM-768** key exchange (FIPS 203) and **ML-DSA-65** signatures (FIPS 204) beside RSA-2048 and ECDSA P-256 | NIST post-quantum standards |
 
 **What's new:** a *timeline*, not just an inventory (qubits **and** gate counts, year by year); hardware tests
-with pass rules **fixed in code before the runs**; circuits that **never encode the answer**; and a **second,
-independent simulator** checking every circuit.
+with pass rules **fixed in code before the runs**; circuits that **never encode the answer**; a **second,
+independent simulator** checking every circuit; and a **hardware-calibrated forecast** that measures the error
+rate on IBM's machines and carries it through to what RSA-2048 would really take.
 
 ---
 
@@ -104,6 +113,9 @@ ring ECDSA P-256, green while safe and pink once breakable.
 <tr>
 <td valign="top"><b>Inside the circuit</b>: quantum-debugger pauses Grover's attack after each oracle and diffuser.<br><br><img src="docs/screenshots/step-through.jpg" alt="Amplitude of every key after the diffuser, and the secret key's probability following the sin squared law"></td>
 <td valign="top"><b>4 · Migrate</b>: a working hybrid ML-KEM handshake and ML-DSA signatures beside RSA and ECDSA.<br><br><img src="docs/screenshots/migrate.jpg" alt="Post-quantum handshake result and signature comparison table"></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><b>Hardware-calibrated Q-Day</b>: the error rate we measured on IBM's machines, carried through to RSA-2048.<br><br><img src="docs/screenshots/calibrated.jpg" alt="Dashboard panel: best measured error per two-qubit gate, physical qubits RSA-2048 would need, and the placement warning"></td>
 </tr>
 </table>
 
@@ -149,51 +161,111 @@ flowchart LR
 
 ## Results on IBM quantum hardware
 
-### First run — `ibm_marrakesh` (4,000 shots each, 8 s of QPU time)
+**8 jobs on 3 IBM quantum computers, 132 circuits, 163 seconds of QPU time.** Every number below is recomputed from
+the raw counts in [`results/`](results/) by `scripts/summarize_results.py`, and a test fails if the tables drift
+from the data. Full tables with 95% intervals, the noise-model prediction and the ideal value for every circuit:
+**[docs/RESULTS.md](docs/RESULTS.md)**.
 
-| Circuit | Two-qubit gates | Result | Success | Noise / guess baseline |
-| :--- | ---: | :--- | ---: | ---: |
-| Shor N = 15, a = 7 | 173 | factors (3, 5), r = 4 | 68.2% | 37.5% |
-| Shor N = 15, a = 2 | 177 | factors (3, 5), r = 4 | 68.2% | 37.5% |
-| Shor N = 15, a = 13 | 177 | factors (3, 5), r = 4 | 71.6% | 37.5% |
-| Grover 3-bit, 1 iteration | 71 | key 6 recovered | 54.5% | 12.5% |
-| Grover 3-bit, 2 iterations | 143 | key 6 recovered | 46.3% | 12.5% |
+| Run | Backend | Job ID | QPU seconds |
+| :--- | :--- | :--- | ---: |
+| First run | `ibm_marrakesh` | `dbc82qvi0auc73ducseg` | 8 |
+| Validation suite | `ibm_fez` · `ibm_kingston` · `ibm_marrakesh` | `dbc8tqgc77vs7385p33g` · `dbc8tffi0auc73duef60` · `dbc8tm7i0auc73duefl0` | 63 |
+| Strict suite | `ibm_fez` · `ibm_kingston` (+ repeat) · `ibm_marrakesh` | `dbc9rls24mrc73cj63jg` · `dbc9rfvi0auc73dugd5g` · `dbc9rg0c77vs7385qv20` · `dbc9ripgv2cc73e9t4v0` | 92 |
 
-The four most frequent Shor outcomes are exactly the ideal peaks y = 0, 2, 4, 6.
+### Validation suite — every circuit on three machines (`scripts/hardware_suite.py`)
 
-### Validation suite — three IBM quantum computers (`scripts/hardware_suite.py`)
-
-17 circuits × 4,000 shots on each machine: Shor for every base of 15, Grover for all 8 three-bit keys, and two
-negative controls that must fail. A test passes only if its whole 95% Wilson interval is above the noise
+17 circuits × 4,000 shots per machine: Shor for every base of 15, Grover for all 8 three-bit keys, and two
+negative controls that must fail. A test passes only if its whole 95% Wilson interval is above the random / noise
 baseline.
 
-| | ibm_fez | ibm_kingston | ibm_marrakesh |
-| :--- | :---: | :---: | :---: |
-| Shor (factors 3 × 5 found) | 7 / 7 | 7 / 7 | 7 / 7 |
-| Grover (correct key recovered) | 8 / 8 | 8 / 8 | 8 / 8 |
-| Grover success (random guess 12.5%) | 56–64% | 59–68% | 38–45% |
-| Both negative controls | ok | ok | ok |
+| | Random / noise baseline | Ideal | Noise model | `ibm_fez` | `ibm_kingston` | `ibm_marrakesh` |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Shor N = 15, a = 7 (173 two-qubit gates) | 37.5% | 75.0% | 70.1% | 67.6% ± 1.5 | 62.3% ± 1.5 | 69.9% ± 1.4 |
+| Shor, all 6 bases (factors 3 × 5 found) | | | | 7 / 7 | 7 / 7 | 7 / 7 |
+| Grover, 2 iterations (143 two-qubit gates) | 12.5% | 94.5% | 71.7–73.2% | 56–64% | 59–68% | 38–45% |
+| Grover, all 8 keys recovered | | | | 8 / 8 | 8 / 8 | 8 / 8 |
+| Both negative controls behave | | | | ok | ok | ok |
 
-**45 / 45 tests pass; the largest p-value is 7.5 × 10⁻²²⁰.**
+**45 / 45 tests pass; the largest p-value is 7.5 × 10⁻²²⁰.** The four most frequent Shor outcomes are exactly
+the ideal peaks y = 0, 2, 4, 6.
 
-### Strict validation — rules fixed before the runs (`scripts/hardware_strict.py`)
+### Strict suite — pass rules fixed in code before the runs (`scripts/hardware_strict.py`)
 
-Six rules (criteria `strict-v1`, in `qday/quantum/validation.py`): a Bonferroni-corrected signal test, the right
+Six rules (criteria `strict-v1` in `qday/quantum/validation.py`): a Bonferroni-corrected signal test, the right
 answer must dominate, at least half the ideal signal must survive, Grover's iteration curve must match theory
-(Pearson r ≥ 0.9), other qubit placements must also pass, and a repeat job must agree. Grover secrets were
-drawn blind at submit time.
+(Pearson r ≥ 0.9), other qubit placements must also pass, and a repeat job must agree. Grover secrets were drawn
+blind at submit time.
 
-| | ibm_kingston | ibm_fez | ibm_marrakesh |
+| | `ibm_kingston` | `ibm_fez` | `ibm_marrakesh` |
 | :--- | :---: | :---: | :---: |
 | Every rule, all 14 tests | **14 / 14** | 11 / 14 | 9 / 14 |
 | Shor | 8 / 8 | 8 / 8 | 8 / 8 |
 | Grover | 6 / 6 | 3 / 6 | 1 / 6 |
-| Grover curve vs theory (r) | 0.99 | 0.97 | 0.91 |
+| Grover curve vs theory (r) | 0.99 | 0.97 | 0.90 |
+| Repeat job agrees | 19 / 19 circuits | not run | not run |
 
-**Shor passed 24 / 24 strict tests. Grover passed 10 / 18:** every Grover run beat random guessing, but where it
-ran on the chip mattered (22% vs 64% on two qubit sets of ibm_marrakesh). Grover keeps quantum phases through
-~140 two-qubit gates, so it is the first to suffer from noise, which is why real attacks need fault-tolerant
-machines. Raw counts and reports are in [`results/`](results/).
+**Shor passed 24 / 24 strict tests; Grover passed 10 / 18.** Every Grover run beat random guessing. All 8
+failures are on the fidelity rule (less than half the ideal signal survived), and the 4 on `ibm_marrakesh`'s
+default qubits also missed the dominance rule. The next section explains why.
+
+### What real hardware taught us
+
+1. **Where a circuit runs matters as much as what it is.** On `ibm_marrakesh` the compiler placed Grover on
+   qubits 33–35, where it reached 22%; the same circuit on qubits 110–112 reached 64% and passed every rule.
+   Measured as error per two-qubit gate, that is **1.6 × 10⁻²** versus **3.3 × 10⁻³** on one chip.
+2. **The noise model was optimistic.** Qiskit's `fake_marrakesh` predicted about 72% for Grover; the real
+   `ibm_marrakesh` gave 38–45%. Its calibration snapshot matched Shor well (70–72% predicted, 69–70% measured).
+3. **Gate count alone does not predict success.** Shor N = 15 keeps ~70% of its 75% ideal through 177 two-qubit
+   gates, while Grover drops to 38–68% through 143. In Shor N = 15 most gates act on the work register, whose
+   errors barely reach the measured counting qubits; Grover measures every qubit it touches. So Shor-15 looking
+   good is not evidence that Shor scales, and we use Grover to measure noise.
+4. **The results are reproducible.** A second, identical `ibm_kingston` job agreed with the first on all 19
+   circuits (chi-square p > 0.001 each).
+5. **Toy scale is a hard wall today.** N = 21 compiles to ~6,500 two-qubit gates (N = 15 needs 173); at the error
+   rate we measured it would succeed about 2 times in a billion, so we ran it on the simulator only.
+
+---
+
+## Hardware-calibrated Q-Day
+
+The published RSA-2048 estimate assumes an error of 10⁻³ per operation. We measured ours. Each Grover run's
+output is fitted as the ideal distribution mixed with uniform noise, `P = F·I + (1 − F)·U`, giving an effective
+error per two-qubit gate `ε = 1 − F^(1/g)` (readout included, so an upper bound). We then carry `ε` through a
+surface-code model to the resources RSA-2048 would need (`qday/forecast/calibrated.py`).
+
+| Machine | Best qubit set | Error per 2-qubit gate | Worst qubit set | Error |
+| :--- | :--- | ---: | :--- | ---: |
+| `ibm_fez` | 8, 9, 10 | 3.1 × 10⁻³ | 85, 86, 87 | 6.2 × 10⁻³ |
+| `ibm_kingston` | 148, 149, 150 | 3.7 × 10⁻³ | 91, 92, 98 | 4.3 × 10⁻³ |
+| `ibm_marrakesh` | 110, 111, 112 | 3.3 × 10⁻³ | 33, 34, 35 | **1.6 × 10⁻² (above threshold)** |
+
+| At an error of | Surface-code distance | Physical qubits for RSA-2048 | Without error correction |
+| :--- | ---: | ---: | :--- |
+| 1.0 × 10⁻³ (published assumption) | 27 | under 1 million | needs 6 × 10⁷× lower error |
+| **3.1 × 10⁻³ (our best measured)** | 55 | **~4.1 million** | needs 2 × 10⁸× lower error |
+| 4.2 × 10⁻³ (our median) | 75 | ~7.7 million | needs 2 × 10⁸× lower error |
+| 1.6 × 10⁻² (marrakesh qubits 33–35) | — | impossible: above the ~1% threshold | — |
+
+**Our finding:** the best qubits on all three machines agree at about **3 × 10⁻³**, three times worse than the
+published estimate assumes, so breaking RSA-2048 on today's qubits would take roughly **4× as many physical
+qubits** (about 4 million rather than under 1 million). The qubits a compiler picks by default can sit **above the
+error-correction threshold**, where no amount of hardware helps. Q-Day therefore depends on error rates falling,
+and on choosing good qubits, as much as on qubit counts. The Time Machine's forecast uses the published figures;
+this section shows how far today's measured hardware is from them.
+
+How today's error rate scales from our circuits to RSA-2048, without error correction:
+
+| Circuit | Two-qubit gates | Chance of an error-free run at 3.1 × 10⁻³ |
+| :--- | ---: | ---: |
+| Grover, 1 iteration (ran on hardware) | 71 | 80% |
+| Grover, 2 iterations (ran on hardware) | 143 | 64% |
+| Shor N = 15 (ran on hardware) | 173 | 59% |
+| Shor N = 21 (simulator only) | ~6,500 | 2 × 10⁻⁹ |
+| RSA-2048 (Gidney 2025) | ~3.9 × 10¹⁰ | 10^(−5 × 10⁷) |
+
+*Model:* surface code `p_L = 0.1 (ε / 0.01)^((d+1)/2)` with ~2d² physical qubits per logical qubit, 1,399 logical
+qubits for under a week at 1 µs per round. It is simpler than the paper's, so physical qubits are scaled from the
+paper's "under one million" at its assumed 10⁻³. Toffoli gates count as 6 CNOTs.
 
 ### Forecast — published attack cost vs IBM's roadmap
 
@@ -244,16 +316,18 @@ qday pqc                                      # hybrid X25519 + ML-KEM-768 hands
 
 Exit codes: 0 ok, 1 findings at or above `--fail-on`, 2 invalid input or every target failed.
 
+Every option, the dashboard walkthrough, configuration and deployment: **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**.
+
 ---
 
 ## Testing
 
 ```bash
-pytest -m "not network and not hardware"   # 967 offline tests
+pytest -m "not network and not hardware"   # 996 offline tests
 pytest -m network                          # 2 live checks against our own site
 ```
 
-**969 tests, 96% line coverage.**
+**998 tests, 96% line coverage.**
 
 | Type | Tests | What it proves |
 | :--- | ---: | :--- |
@@ -268,7 +342,9 @@ pytest -m network                          # 2 live checks against our own site
 | Statistics and strict criteria | 27 | Pass rules accept good data and reject noise |
 | Golden results | 26 | Every hardware number in this README recomputed from the raw counts |
 | Config and runner | 26 | Credential handling (the token is never printed), backend selection |
-| Dashboard (AppTest) | 24 | The real dashboard driven headlessly: every tab, bad inputs, the step-through |
+| Dashboard (AppTest) | 25 | The real dashboard driven headlessly: every tab, bad inputs, the step-through, the calibrated forecast |
+| Noise calibration | 24 | The estimator recovers known noise and its intervals cover the truth; the surface-code model; the README's numbers |
+| Results document | 4 | `docs/RESULTS.md` matches the raw counts; every job ID is listed; QPU seconds add up |
 | Property-based (Hypothesis) | 20 | Thousands of generated cases: factors multiply to N, intervals contain the rate |
 | Web server | 16 | Landing at `/`, dashboard at `/app/`: websockets, large messages, dashboard down |
 | Performance | 4 | 1,500-file scan in under 15 s; 10,000 assets assessed in under 3 s |
@@ -304,14 +380,14 @@ dashboard; a missing folder reported "0 findings".
 │   ├── cli.py                # `qday` command-line tool
 │   ├── safety.py             # hostname / port validation
 │   ├── scanner/              # TLS profile, source-code rules, CBOM export
-│   ├── forecast/             # published estimates, IBM roadmap, risk (Mosca)
+│   ├── forecast/             # published estimates, IBM roadmap, risk (Mosca), hardware-calibrated forecast
 │   ├── quantum/              # Shor, Grover, IBM runner, statistics, strict criteria, quantum-debugger check
 │   └── migrate/              # hybrid X25519 + ML-KEM-768, ML-DSA-65
-├── scripts/                  # IBM hardware runs: first run, 3-backend suite, strict suite
+├── scripts/                  # IBM hardware runs (first run, 3-backend suite, strict suite) and summarize_results.py
 ├── results/                  # raw hardware counts and reports
 ├── samples/legacy_app/       # deliberately vulnerable code for the scanner demo
-├── docs/                     # presentation and README screenshots
-├── tests/                    # 969 tests
+├── docs/                     # USER_GUIDE.md, ARCHITECTURE.md, RESULTS.md (generated), presentation, screenshots
+├── tests/                    # 998 tests
 ├── Dockerfile                # production image
 └── .github/workflows/ci.yml  # lint and tests on Python 3.11 and 3.12
 ```
