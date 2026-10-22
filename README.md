@@ -94,16 +94,16 @@ ring ECDSA P-256, green while safe and pink once breakable.
 
 <table>
 <tr>
-<td width="50%"><b>1 · Scan</b>: our own website uses post-quantum key exchange, but its ECDSA certificate is breakable; code findings are sorted by what to fix first.<br><br><img src="docs/screenshots/scan.jpg" alt="Scan results grouped into fix now, plan migration and already safe"></td>
-<td width="50%"><b>2 · Time Machine</b>: the best quantum computer each year against what each attack needs.<br><br><img src="docs/screenshots/time-machine.jpg" alt="Time Machine in 2040 with quantum power versus attack requirements"></td>
+<td width="50%" valign="top"><b>1 · Scan</b>: our own website uses post-quantum key exchange, but its ECDSA certificate is breakable; code findings are sorted by what to fix first.<br><br><img src="docs/screenshots/scan.jpg" alt="Scan results grouped into fix now, plan migration and already safe"></td>
+<td width="50%" valign="top"><b>2 · Time Machine</b>: the best quantum computer each year against what each attack needs.<br><br><img src="docs/screenshots/time-machine.jpg" alt="Time Machine in 2040 with quantum power versus attack requirements"></td>
 </tr>
 <tr>
-<td><b>3 · Prove it</b>: Shor's algorithm factoring 15 on ibm_marrakesh; the pink bars are the correct answers.<br><br><img src="docs/screenshots/hardware-proof.jpg" alt="Shor measurement histogram from ibm_marrakesh"></td>
-<td><b>Strict validation</b>: pre-registered pass rules across three IBM quantum computers.<br><br><img src="docs/screenshots/strict-validation.jpg" alt="Table of strict validation results per backend"></td>
+<td valign="top"><b>3 · Prove it</b>: Shor's algorithm factoring 15 on ibm_marrakesh; the pink bars are the correct answers.<br><br><img src="docs/screenshots/hardware-proof.jpg" alt="Shor measurement histogram from ibm_marrakesh"></td>
+<td valign="top"><b>Strict validation</b>: pre-registered pass rules across three IBM quantum computers.<br><br><img src="docs/screenshots/strict-validation.jpg" alt="Table of strict validation results per backend"></td>
 </tr>
 <tr>
-<td><b>Inside the circuit</b>: quantum-debugger pauses Grover's attack after each oracle and diffuser.<br><br><img src="docs/screenshots/step-through.jpg" alt="Amplitude of every key after the diffuser, and the secret key's probability following the sin squared law"></td>
-<td><b>4 · Migrate</b>: a working hybrid ML-KEM handshake and ML-DSA signatures beside RSA and ECDSA.<br><br><img src="docs/screenshots/migrate.jpg" alt="Post-quantum handshake result and signature comparison table"></td>
+<td valign="top"><b>Inside the circuit</b>: quantum-debugger pauses Grover's attack after each oracle and diffuser.<br><br><img src="docs/screenshots/step-through.jpg" alt="Amplitude of every key after the diffuser, and the secret key's probability following the sin squared law"></td>
+<td valign="top"><b>4 · Migrate</b>: a working hybrid ML-KEM handshake and ML-DSA signatures beside RSA and ECDSA.<br><br><img src="docs/screenshots/migrate.jpg" alt="Post-quantum handshake result and signature comparison table"></td>
 </tr>
 </table>
 
