@@ -10,7 +10,7 @@
 
 [![Watch the 2-minute demo on YouTube](https://img.youtube.com/vi/8AHgcPisYlE/maxresdefault.jpg)](https://youtu.be/8AHgcPisYlE)
 
-▶ **[Watch the 2-minute demo](https://youtu.be/8AHgcPisYlE)**
+▶ **[Watch the 2-minute demo](https://youtu.be/8AHgcPisYlE)** &nbsp;·&nbsp; 📑 **[Presentation (PPTX)](docs/Q-Day_Time_Machine_VTU-QFF-HC-0106.pptx)**
 
 </div>
 
@@ -291,6 +291,7 @@ vtu-hc-straw-hat-pirates/
 ├── scripts/                  # IBM hardware runs: first run, 3-backend suite, strict suite
 ├── results/                  # raw hardware counts and reports
 ├── samples/legacy_app/       # deliberately vulnerable sample code for the scanner demo
+├── docs/                     # hackathon presentation (PPTX)
 ├── tests/                    # 969 tests
 └── .github/workflows/ci.yml  # lint + tests on Python 3.11 and 3.12
 ```
