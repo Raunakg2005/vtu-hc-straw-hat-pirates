@@ -1,0 +1,38 @@
+{
+ "job_id": "dbc82qvi0auc73ducseg",
+ "backend": "ibm_marrakesh",
+ "shots": 4000,
+ "submitted": "2026-10-21T09:10:02+00:00",
+ "circuits": [
+  {
+   "name": "shor_N15_a7",
+   "depth": 512,
+   "two_qubit_gates": 173,
+   "num_qubits_used": 7
+  },
+  {
+   "name": "shor_N15_a2",
+   "depth": 522,
+   "two_qubit_gates": 177,
+   "num_qubits_used": 7
+  },
+  {
+   "name": "shor_N15_a13",
+   "depth": 541,
+   "two_qubit_gates": 177,
+   "num_qubits_used": 7
+  },
+  {
+   "name": "grover_n3_p5_c5_it1",
+   "depth": 250,
+   "two_qubit_gates": 71,
+   "num_qubits_used": 3
+  },
+  {
+   "name": "grover_n3_p5_c5_it2",
+   "depth": 479,
+   "two_qubit_gates": 143,
+   "num_qubits_used": 3
+  }
+ ]
+}

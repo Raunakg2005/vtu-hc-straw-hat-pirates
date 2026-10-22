@@ -1,0 +1,898 @@
+<title>Q-Day Time Machine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Find the cryptography a quantum computer will break, see when it breaks, and prove it on real IBM quantum hardware.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..800&family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&display=swap">
+<style>
+/* Same design tokens as the dashboard (qday/ui.py, .streamlit/config.toml): Qiskit Fall Fest 2026 lavender grid,
+   cream cards, plum ink, pink accent. A three.js tunnel (one ring per year, colored by what a quantum computer of
+   that year can break) floats behind the page on a transparent canvas; scrolling flies the camera to 2050. */
+:root {
+  --bg: #f4efff; --surface: #fff9f3; --ink: #392045; --muted: #756879; --line: #d8cadc;
+  --accent: #e85291; --berry: #b3245e; --lav: #dcd2fa; --violet: #7a5cb8; --sun: #f4c84e; --sun-ink: #a87a06;
+  --good: #2f8f6b; --bad: #b3245e; --grid: rgba(122, 92, 184, .07); --code-bg: #24122e; --shadow: 57, 32, 69;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", monospace;
+  --radius: 1.15rem; --gutter: max(16px, env(safe-area-inset-left, 0px)); --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  color-scheme: light;
+}
+/* the dashboard is light-only (Streamlit theme base = light), so the landing page stays light in every scheme */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #f4efff; --ink: #392045; color-scheme: light; } }
+:root[data-theme="dark"] { --bg: #f4efff; --ink: #392045; color-scheme: light; }
+
+* { box-sizing: border-box; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+body {
+  margin: 0; background-color: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6;
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 44px 44px; background-attachment: fixed; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+}
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; opacity: 0; transition: opacity 1.2s ease; pointer-events: none; }
+#scene.ready { opacity: 1; }
+.shade { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(244, 239, 255, .96) 0%, rgba(244, 239, 255, .88) 42%, rgba(244, 239, 255, .45) 56%, rgba(244, 239, 255, 0) 68%); }
+@media (max-width: 1023px) {
+  /* narrow screens: the tunnel lives in the top band, text below sits on a lavender scrim */
+  .shade { background: linear-gradient(180deg, rgba(244, 239, 255, 0) 0%, rgba(244, 239, 255, 0) 22%, rgba(244, 239, 255, .85) 40%, rgba(244, 239, 255, .92) 100%); }
+}
+.page { position: relative; z-index: 1; }
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter-r); }
+section { padding-block: clamp(64px, 11vw, 140px); }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.04; text-wrap: balance; margin: 0; color: var(--ink); }
+h1 { font-size: clamp(2.6rem, 6.6vw, 5.4rem); }
+h2 { font-size: clamp(2rem, 4.6vw, 3.4rem); }
+h3 { font-size: 1.3rem; }
+em { color: var(--accent); font-style: italic; }
+p { margin: 0; max-width: 62ch; }
+.lede { color: var(--muted); font-size: clamp(1.02rem, 1.4vw, 1.18rem); }
+main .section-head .lede { max-width: 50ch; }
+main .section-head, .cta, .hero-copy { text-shadow: 0 0 2px rgba(244, 239, 255, 1), 0 0 18px rgba(244, 239, 255, .95), 0 0 34px rgba(244, 239, 255, .9); }
+a { color: var(--accent); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.eyebrow { display: inline-flex; align-items: center; gap: .55rem; color: var(--accent); font-weight: 800; font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; }
+.eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+.eyebrow b { font-family: var(--mono); color: var(--muted); font-weight: 600; letter-spacing: .05em; }
+.stack { display: grid; gap: 1.1rem; }
+.num { font-variant-numeric: tabular-nums; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- chrome: progress, nav, flight HUD */
+#progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 30; transform-origin: 0 50%; transform: scaleX(0);
+  background: linear-gradient(90deg, var(--violet), var(--accent)); }
+.nav { position: fixed; top: 12px; left: 0; right: 0; z-index: 20; pointer-events: none; }
+.nav .bar { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .5rem .55rem .5rem 1rem;
+  border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 249, 243, .82);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 6px 24px -14px rgba(var(--shadow), .35); transition: background-color .4s; }
+.nav.scrolled .bar { background: rgba(255, 249, 243, .94); }
+.brand { font-family: var(--display); font-weight: 600; font-size: 1.08rem; display: flex; align-items: center; gap: .5rem; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.links { display: flex; gap: 1.5rem; font-weight: 700; font-size: .9rem; }
+.links a { color: var(--ink); text-decoration: none; transition: color .2s; white-space: nowrap; }
+.links a:hover { color: var(--accent); }
+.hud { display: flex; align-items: center; gap: .75rem; padding: .2rem .8rem .2rem .2rem; border-radius: 999px; background: var(--bg);
+  border: 1px solid var(--line); font-size: .78rem; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden;
+  max-width: 0; opacity: 0; padding-inline: 0; border-width: 0; transition: max-width .5s, opacity .4s, padding .5s; pointer-events: none; }
+.hud.on { max-width: 420px; opacity: 1; padding: .2rem .8rem .2rem .2rem; border-width: 1px; }
+.hud .yr { font-family: var(--display); font-size: 1rem; background: var(--ink); color: var(--surface); border-radius: 999px; padding: .05rem .6rem; }
+.hud .s { display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.c-safe { color: var(--good); } .c-ready { color: var(--sun-ink); } .c-broken { color: var(--bad); }
+.dot.c-safe { background: var(--good); } .dot.c-ready { background: var(--sun); } .dot.c-broken { background: var(--accent); }
+
+/* ---------- buttons (pill, as in the dashboard) */
+.btn { display: inline-flex; align-items: center; gap: .5rem; padding: .85rem 1.4rem; border-radius: 999px; font-weight: 800; font-size: .98rem;
+  text-decoration: none; border: 1px solid transparent; transition: background-color .25s, color .25s, border-color .25s; will-change: transform; }
+.btn.primary { background: var(--accent); color: var(--surface); box-shadow: 0 10px 24px -12px rgba(232, 82, 145, .8); }
+.btn.primary:hover { background: var(--ink); }
+.btn.ghost { color: var(--ink); border-color: var(--line); background: var(--surface); }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn.sm { padding: .5rem 1rem; font-size: .86rem; white-space: nowrap; }
+.btn { text-shadow: none; }
+
+/* ---------- hero */
+.hero { min-height: 100svh; display: grid; align-content: center; padding-block: 110px 56px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(28px, 4vw, 56px); align-items: end; }
+.hero-grid .panel { justify-self: end; width: 100%; max-width: 480px; margin-top: 34vh; }
+.hero-copy { display: grid; gap: 1.3rem; }
+.hero-copy .lede { max-width: 29em; }
+.title .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 .04em .14em; margin-bottom: -.14em; }
+.title .w > * { display: inline-block; }
+.actions { display: flex; flex-wrap: wrap; gap: .8rem; }
+.credits { color: var(--muted); font-size: .88rem; }
+.panel { position: relative; padding: 1.25rem; border-radius: var(--radius); background: rgba(255, 249, 243, .9); border: 1px solid var(--line);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 24px 60px -30px rgba(var(--shadow), .55); display: grid; gap: 1rem; min-width: 0; }
+.panel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: .8rem; flex-wrap: wrap; }
+.label { font-size: .66rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.year { font-family: var(--display); font-size: clamp(2.8rem, 7vw, 4rem); line-height: .95; color: var(--ink); }
+.toggle { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: .22rem; gap: .15rem; }
+.toggle button { border: 0; background: transparent; color: var(--ink); font: inherit; font-size: .8rem; font-weight: 700; padding: .42rem .85rem; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+input[type="range"] { width: 100%; accent-color: var(--accent); height: 32px; cursor: grab; margin: 0; }
+.ticks { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); font-family: var(--mono); }
+.readout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .55rem; margin: 0; }
+.readout div { background: var(--bg); border: 1px solid var(--line); border-radius: .85rem; padding: .55rem .7rem; min-width: 0; }
+.readout dt { font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 800; }
+.readout dd { margin: 0; font-weight: 800; font-size: .98rem; overflow-wrap: anywhere; }
+.legend-row { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: .76rem; color: var(--muted); }
+.legend-row span { display: inline-flex; align-items: center; gap: .4rem; }
+.scroll-cue { display: flex; align-items: center; gap: .7rem; color: var(--muted); font-size: .76rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-top: clamp(1.5rem, 4vh, 3rem); }
+.scroll-cue i { width: 22px; height: 34px; border: 2px solid var(--muted); border-radius: 12px; position: relative; flex: none; }
+.scroll-cue i::after { content: ""; position: absolute; left: 50%; top: 6px; width: 4px; height: 7px; margin-left: -2px; border-radius: 2px; background: var(--accent); animation: cue 1.6s infinite; }
+@keyframes cue { 0% { transform: translateY(0); opacity: 1; } 80% { transform: translateY(12px); opacity: 0; } 100% { opacity: 0; } }
+
+/* ---------- surfaces (the dashboard's cream cards) */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1.1rem, 2.4vw, 1.5rem);
+  box-shadow: 0 6px 24px -14px rgba(var(--shadow), .35); min-width: 0; }
+.tilt { transform: perspective(1000px) rotateX(var(--tx, 0deg)) rotateY(var(--ty, 0deg)); transition: transform .4s cubic-bezier(.2, .8, .2, 1), box-shadow .3s; }
+.tilt:hover { box-shadow: 0 22px 44px -22px rgba(var(--shadow), .45); }
+.section-head { display: grid; gap: 1.1rem; max-width: 820px; }
+.grid-3, .grid-4, .grid-2 { display: grid; gap: clamp(.9rem, 1.8vw, 1.2rem); margin-top: clamp(2rem, 4vw, 3rem); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* stat cards: the dashboard's pink / lavender / yellow countdown cards */
+.fact { display: grid; gap: .5rem; align-content: start; }
+.fact .big { font-family: var(--display); font-size: clamp(2.6rem, 5vw, 3.4rem); line-height: 1; color: var(--ink); }
+.fact .src { font-size: .8rem; color: #5b4566; }
+.fact:nth-child(1) { background: #f7a8c8; border-color: #f095ba; }
+.fact:nth-child(2) { background: var(--lav); border-color: #c9bbf0; }
+.fact:nth-child(3) { background: #f8dc8b; border-color: #efcd6a; }
+
+/* steps: the dashboard's numbered step strip */
+.step { display: grid; gap: .6rem; align-content: start; }
+.step .ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--surface); background: var(--ink); }
+.step:nth-child(2) .ico { background: var(--accent); }
+.step:nth-child(3) .ico { background: var(--violet); }
+.step:nth-child(4) .ico { background: var(--good); }
+.step .k { font-family: var(--mono); font-size: .76rem; color: var(--accent); font-weight: 700; }
+.step p { color: var(--muted); font-size: .95rem; }
+
+.figure { display: grid; gap: .9rem; margin: 0; align-content: start; }
+.claim { font-family: var(--display); font-size: clamp(1.3rem, 2.4vw, 1.6rem); line-height: 1.2; }
+.note { color: var(--muted); font-size: .9rem; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { fill: var(--muted); font-family: var(--body); font-size: 12px; }
+.chart .axis { stroke: var(--line); }
+.legend { display: flex; flex-wrap: wrap; gap: .45rem 1rem; font-size: .82rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+.score { display: grid; gap: .3rem; align-content: start; }
+.score b { font-family: var(--display); font-size: clamp(2rem, 3.6vw, 2.6rem); line-height: 1.05; color: var(--ink); }
+.score > span { font-size: .86rem; color: var(--muted); }
+.score.hot { background: var(--ink); border-color: var(--ink); }
+.score.hot b { color: var(--surface); } .score.hot > span { color: #d9cce3; }
+.verdict { margin-top: clamp(.9rem, 1.8vw, 1.2rem); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .9rem; align-items: start;
+  background: #fde6ef; border-color: #f5b9d1; }
+
+.site-wrap { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+.site { display: grid; gap: 1rem; }
+.site-top { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; }
+.site h3 { font-family: var(--mono); font-size: 1.05rem; letter-spacing: 0; font-weight: 700; display: flex; align-items: center; gap: .55rem; }
+.site dl { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .7rem 1rem; margin: 0; align-items: center; font-size: .94rem; }
+.site dt { color: var(--muted); }
+.site dd { margin: 0; font-family: var(--mono); font-size: .88rem; overflow-wrap: anywhere; color: var(--violet); }
+.chip { font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: .22rem .65rem; border-radius: 999px; white-space: nowrap; justify-self: start; color: var(--surface); }
+.chip.safe { background: var(--good); }
+.chip.broken { background: var(--berry); }
+
+.eng { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: clamp(1.5rem, 4vw, 3rem); margin-top: clamp(2rem, 4vw, 3rem); align-items: start; }
+.term { background: var(--code-bg); border: 1px solid var(--ink); border-radius: var(--radius); overflow: hidden; box-shadow: 0 24px 50px -30px rgba(var(--shadow), .7); }
+.term-bar { display: flex; gap: 6px; padding: .7rem .9rem; border-bottom: 1px solid rgba(255, 255, 255, .1); }
+.term-bar i { width: 10px; height: 10px; border-radius: 50%; }
+.term-bar i:first-child { background: var(--accent); } .term-bar i:nth-child(2) { background: var(--sun); } .term-bar i:nth-child(3) { background: #4fc79a; }
+.code { margin: 0; padding: 1.1rem 1.3rem 1.3rem; overflow-x: auto; font-family: var(--mono); font-size: .86rem; line-height: 1.85; color: #f6eefa; }
+.code span { display: block; white-space: pre; }
+.code .c { color: #b9a6dd; } .code .p { color: #ff8cbc; font-weight: 400; }
+.bars { display: grid; gap: .85rem; margin: 0; padding: 0; list-style: none; }
+.bars li { display: grid; gap: .35rem; }
+.bars .row { display: flex; justify-content: space-between; gap: 1rem; font-size: .93rem; }
+.bars .row b { font-family: var(--display); font-size: 1.2rem; }
+.bars .track { height: 10px; border-radius: 999px; background: var(--lav); overflow: hidden; }
+.bars .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--violet)); width: var(--w); transform-origin: 0 50%; }
+.bugs { margin: 1.6rem 0 0; display: grid; gap: .55rem; padding-left: 1.2rem; color: var(--muted); }
+.bugs li::marker { color: var(--accent); }
+
+.cta { display: grid; justify-items: start; gap: 1.3rem; max-width: 620px; }
+@media (max-width: 1023px) { .cta { text-align: center; justify-items: center; max-width: none; } .cta p { margin-inline: auto; } }
+
+footer { border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1.4rem, 3vw, 2.4rem); margin-bottom: 48px;
+  background: rgba(255, 249, 243, .94); box-shadow: 0 6px 24px -14px rgba(var(--shadow), .35);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; font-size: .92rem; }
+footer ul { margin: .6rem 0 0; padding-left: 1.1rem; display: grid; gap: .35rem; color: var(--muted); }
+footer .team { display: grid; gap: .4rem; }
+
+/* ---------- responsive */
+@media (max-width: 1024px) {
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-grid, .site-wrap, .eng { grid-template-columns: minmax(0, 1fr); }
+  .hero { min-height: auto; padding-top: max(240px, 40svh); }
+  .hero-grid .panel { justify-self: stretch; max-width: 640px; margin-top: 0; }
+}
+@media (max-width: 860px) {
+  .grid-3, .grid-2 { grid-template-columns: minmax(0, 1fr); }
+  footer { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 1500px) { .hud .detail { display: none; } }
+@media (max-width: 760px) {
+  .links { display: none; }
+  .hud .tag { display: none; }
+  .hud.on { padding: .2rem .55rem .2rem .2rem; }
+  .nav.scrolled .brand-name { display: none; }
+}
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .hero { padding-top: max(220px, 36svh); }
+  .grid-4 { grid-template-columns: minmax(0, 1fr); }
+  .grid-4.scores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .score b { font-size: 1.8rem; }
+  .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .toggle { width: 100%; }
+  .toggle button { flex: 1; }
+  .site dl { grid-template-columns: minmax(0, 1fr) auto; }
+  .site dt { grid-column: 1 / -1; margin-bottom: -.5rem; font-size: .8rem; }
+  .actions .btn { flex: 1 1 auto; justify-content: center; }
+  .code { font-size: .76rem; padding-inline: 1rem; }
+  .verdict { grid-template-columns: minmax(0, 1fr); }
+  .brand { font-size: .98rem; }
+}
+@media (max-width: 360px) { .grid-4.scores { grid-template-columns: minmax(0, 1fr); } .nav .btn.sm { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .tilt, .btn, .hud, #scene { transition: none; }
+  .scroll-cue i::after { animation: none; }
+}
+</style>
+
+<canvas id="scene" aria-hidden="true"></canvas>
+<div class="shade" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <div class="bar">
+      <a class="brand" href="#top">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span class="brand-name">Q-Day Time Machine</span>
+      </a>
+      <div class="hud" id="hud" aria-hidden="true">
+        <span class="yr num" id="hud-year">2033</span>
+        <span class="s"><span class="dot" id="hud-rsa-dot"></span><span class="tag">RSA-2048</span> <span class="detail" id="hud-rsa">qubits ready</span></span>
+        <span class="s"><span class="dot" id="hud-ecc-dot"></span><span class="tag">P-256</span> <span class="detail" id="hud-ecc">safe</span></span>
+      </div>
+      <nav class="links" aria-label="Sections"><a href="#how">How it works</a><a href="#proof">Hardware proof</a><a href="#engineering">Engineering</a><a href="#team">Team</a></nav>
+      <a class="btn primary sm" href="/app/">Launch app</a>
+    </div>
+  </div>
+</header>
+
+
+<div class="page" id="top">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <div class="eyebrow" data-intro>Qiskit Fall Fest 2026 · Track 1</div>
+        <h1 class="title" aria-label="When does your encryption die?">
+          <span class="w" aria-hidden="true"><span>When</span></span> <span class="w" aria-hidden="true"><span>does</span></span>
+          <span class="w" aria-hidden="true"><span>your</span></span> <span class="w" aria-hidden="true"><em>encryption</em></span>
+          <span class="w" aria-hidden="true"><span>die?</span></span>
+        </h1>
+        <p class="lede" data-intro>You are flying through IBM's quantum roadmap. Every ring is one year: the outer ring is RSA-2048,
+          the inner ring is ECDSA P-256, colored by whether a quantum computer of that year could break it. Scroll to keep flying.</p>
+        <div class="actions" data-intro>
+          <a class="btn primary" href="/app/" data-magnet>Launch the app
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn ghost" href="#proof" data-magnet>See the hardware proof</a>
+        </div>
+        <p class="credits" data-intro>Team Straw Hat Pirates · Qiskit, Qiskit Aer, Qiskit IBM Runtime</p>
+      </div>
+
+      <div class="panel" id="panel">
+        <div class="panel-head">
+          <div><div class="label">Pick a year</div><div class="year num" id="year-out" aria-live="polite">2033</div></div>
+          <div class="toggle" role="group" aria-label="Hardware scenario">
+            <button type="button" id="sc-trend" aria-pressed="true">Roadmap + growth</button>
+            <button type="button" id="sc-roadmap" aria-pressed="false">Roadmap only</button>
+          </div>
+        </div>
+        <div>
+          <label class="sr" for="year">Year</label>
+          <input type="range" id="year" min="2026" max="2050" value="2033">
+          <div class="ticks" aria-hidden="true"><span>2026</span><span>2034</span><span>2042</span><span>2050</span></div>
+        </div>
+        <dl class="readout">
+          <div><dt>Machine</dt><dd id="m-name">Blue Jay</dd></div>
+          <div><dt>Logical qubits</dt><dd class="num" id="m-q">2,000</dd></div>
+          <div><dt>RSA-2048</dt><dd id="s-rsa">qubits ready</dd></div>
+          <div><dt>ECDSA P-256</dt><dd id="s-ecc">safe</dd></div>
+        </dl>
+        <div class="legend-row"><span><i class="dot c-safe"></i>safe for now</span><span><i class="dot c-ready"></i>enough qubits, not enough gates</span><span><i class="dot c-broken"></i>breakable</span></div>
+      </div>
+    </div>
+    <div class="wrap"><div class="scroll-cue" aria-hidden="true"><i></i>Scroll to fly forward in time</div></div>
+  </section>
+
+  <main>
+    <section aria-labelledby="problem-title">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <div class="eyebrow"><b>01</b> Harvest now, decrypt later</div>
+          <h2 id="problem-title">The data you send <em>today</em> can be read tomorrow.</h2>
+          <p class="lede">Attackers can record encrypted traffic now and decrypt it once a large quantum computer exists.
+            Every company knows this. Almost none can say which systems break first, or when.</p>
+        </div>
+        <div class="grid-3" data-stagger>
+          <div class="card tilt fact"><span class="big num" data-count="1399">1,399</span>
+            <p>logical qubits to break RSA-2048, in under a week with fewer than a million noisy qubits.</p>
+            <span class="src">Gidney, arXiv:2505.15917 (2025)</span></div>
+          <div class="card tilt fact"><span class="big num" data-count="2000">2,000</span>
+            <p>qubits in IBM Blue Jay, the fault-tolerant system on IBM's public roadmap for 2033 and beyond.</p>
+            <span class="src">ibm.com/roadmaps/quantum</span></div>
+          <div class="card tilt fact"><span class="big num" data-count="2035" data-from="2024" data-plain>2035</span>
+            <p>is when NIST's draft transition plan disallows RSA and elliptic-curve cryptography.</p>
+            <span class="src">NIST IR 8547, initial public draft (2024)</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" aria-labelledby="how-title">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <div class="eyebrow"><b>02</b> How it works</div>
+          <h2 id="how-title">Scan, forecast, <em>prove</em>, migrate.</h2>
+        </div>
+        <div class="grid-4" data-stagger>
+          <div class="card tilt step"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <span class="k">step 01</span><h3>Scan</h3><p>Reads live websites and source code in eight languages and exports a CycloneDX 1.6 cryptography bill of materials.</p></div>
+          <div class="card tilt step"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <span class="k">step 02</span><h3>Forecast</h3><p>Compares each algorithm's published cost in logical qubits and gates with IBM's roadmap, year by year.</p></div>
+          <div class="card tilt step"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg></span>
+            <span class="k">step 03</span><h3>Prove</h3><p>Runs Shor's algorithm and Grover's search, built in Qiskit, on real IBM quantum computers, and steps through them gate by gate with our quantum-debugger library.</p></div>
+          <div class="card tilt step"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg></span>
+            <span class="k">step 04</span><h3>Migrate</h3><p>Swaps in NIST's post-quantum standards, ML-KEM and ML-DSA, with a working hybrid handshake.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="proof" aria-labelledby="proof-title">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <div class="eyebrow"><b>03</b> Real hardware</div>
+          <h2 id="proof-title">We ran the attacks on <em>three</em> IBM quantum computers.</h2>
+          <p class="lede">Toy-sized keys, real machines: ibm_fez, ibm_kingston and ibm_marrakesh. Every pass rule was fixed
+            in code before the runs, and two negative controls had to fail.</p>
+        </div>
+        <div class="grid-2" data-stagger>
+          <figure class="card figure" id="shor-fig">
+            <p class="claim">Shor factored <em>15 = 3 × 5</em> on ibm_marrakesh.</p>
+            <svg class="chart" id="shor-chart" role="img" aria-label="3D bar chart of measured outcomes: the ideal answers 0, 2, 4 and 6 (1097, 817, 1019 and 892 counts) are far taller than the noise (about 45 each)"></svg>
+            <div class="legend"><span><i style="background:var(--accent)"></i>answers the algorithm should give</span><span><i style="background:var(--lav)"></i>hardware noise</span></div>
+            <figcaption class="note">4,000 shots, 173 two-qubit gates. The four ideal answers dominate, which reveals the period r = 4 and the factors.</figcaption>
+          </figure>
+          <figure class="card figure" id="grover-fig">
+            <p class="claim">Grover's search has a <em>fingerprint</em> noise cannot fake.</p>
+            <svg class="chart" id="grover-chart" role="img" aria-label="Line chart: Grover success climbs, peaks at 2 iterations, then falls, on all three machines, following theory"></svg>
+            <div class="legend" id="grover-legend"></div>
+            <figcaption class="note">Chance of finding a random 3-bit key. Success climbs, peaks at the optimal 2 iterations, then falls when the search overshoots, as theory predicts.</figcaption>
+          </figure>
+        </div>
+        <div class="grid-4 scores" data-stagger>
+          <div class="card score hot"><b class="num"><span data-count="45">45</span> / 45</b><span>validation tests passed on 3 machines</span></div>
+          <div class="card score"><b class="num"><span data-count="24">24</span> / 24</b><span>strict Shor tests passed on every machine and placement</span></div>
+          <div class="card score"><b class="num"><span data-count="14">14</span> / 14</b><span>strict tests passed on ibm_kingston, repeat run included</span></div>
+          <div class="card score"><b class="num"><span data-count="10">10</span> / 18</b><span>strict Grover tests passed</span></div>
+        </div>
+        <div class="card verdict" data-reveal>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <p>Every run beat random noise. Grover failed some strict checks because it must keep quantum phases intact through
+            about 140 two-qubit gates, and on ibm_marrakesh the qubits it ran on decided the result: 22% on one set, 64% on
+            another. That gap is why a real attack needs fault-tolerant machines.</p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sites-title">
+      <div class="wrap site-wrap">
+        <div class="section-head" data-reveal>
+          <div class="eyebrow"><b>04</b> First scan</div>
+          <h2 id="sites-title">We scanned <em>our own</em> website first.</h2>
+          <p class="lede">It already uses post-quantum key exchange, so recorded traffic stays secret. Its certificate does
+            not, so once signatures can be forged, the site can be impersonated.</p>
+        </div>
+        <div class="card tilt site" data-reveal>
+          <div class="site-top">
+            <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>quantyxio.cloud</h3>
+            <span class="chip broken">2 of 4 at risk</span>
+          </div>
+          <dl>
+            <dt>Key exchange</dt><dd>X25519MLKEM768</dd><span class="chip safe">safe</span>
+            <dt>Certificate</dt><dd>ECDSA P-256</dd><span class="chip broken">Shor</span>
+            <dt>Issuing CA</dt><dd>ECDSA P-384</dd><span class="chip broken">Shor</span>
+            <dt>Encryption</dt><dd>AES-256-GCM</dd><span class="chip safe">safe</span>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <section id="engineering" aria-labelledby="eng-title">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <div class="eyebrow"><b>05</b> Engineering</div>
+          <h2 id="eng-title"><em>998</em> tests and a tool you can put in CI.</h2>
+        </div>
+        <div class="eng">
+          <div class="stack" data-reveal>
+            <div class="term">
+              <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+              <pre class="code" aria-label="Command-line examples"><span class="c"># fail the build on quantum-vulnerable crypto</span><span><b class="p">$</b> qday scan --path ./src --fail-on critical</span><span> </span><span class="c"># when does RSA-2048 break?</span><span><b class="p">$</b> qday forecast RSA-2048</span><span> </span><span class="c"># export a CycloneDX 1.6 CBOM</span><span><b class="p">$</b> qday cbom --host example.com -o cbom.json</span><span> </span><span class="c"># run Shor on IBM hardware</span><span><b class="p">$</b> qday shor --N 15 --a 7 --backend ibm_kingston</span></pre>
+            </div>
+            <p class="note">96% line coverage · lint with security rules · CI on Python 3.11 and 3.12 · non-root Docker image</p>
+          </div>
+          <div class="card" data-reveal>
+            <ul class="bars">
+              <li><div class="row"><span>Exhaustive quantum</span><b class="num">272</b></div><div class="track"><div class="fill" style="--w:100%"></div></div></li>
+              <li><div class="row"><span>Post-quantum, CLI, dashboard, golden results</span><b class="num">196</b></div><div class="track"><div class="fill" style="--w:72%"></div></div></li>
+              <li><div class="row"><span>Forecast and risk</span><b class="num">193</b></div><div class="track"><div class="fill" style="--w:71%"></div></div></li>
+              <li><div class="row"><span>Security</span><b class="num">94</b></div><div class="track"><div class="fill" style="--w:35%"></div></div></li>
+              <li><div class="row"><span>TLS handshakes, five certificate types</span><b class="num">72</b></div><div class="track"><div class="fill" style="--w:26%"></div></div></li>
+              <li><div class="row"><span>Scanner rules, eight languages</span><b class="num">58</b></div><div class="track"><div class="fill" style="--w:21%"></div></div></li>
+            </ul>
+            <ol class="bugs">
+              <li>The tests caught the scanner missing classic key exchange in OpenSSL 3.5 output, the exact risk the tool exists to flag.</li>
+              <li>They blocked hostnames that OpenSSL would have read as command options.</li>
+              <li>They found five more defects, from a statistics edge case to a dashboard crash. All fixed.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="cta-title">
+      <div class="wrap"><div class="cta" data-reveal>
+        <div class="eyebrow"><b>2050</b> End of the line</div>
+        <h2 id="cta-title">Know your <em>Q-Day</em> before it knows you.</h2>
+        <p class="lede">Scan a site or a codebase, see the year each algorithm falls, and get the post-quantum replacement.</p>
+        <div class="actions"><a class="btn primary" href="/app/" data-magnet>Launch the app</a><a class="btn ghost" href="#top" data-magnet>Fly back to 2026</a></div>
+      </div></div>
+    </section>
+  </main>
+
+  <div class="wrap">
+    <footer id="team">
+      <div class="team">
+        <div class="eyebrow">Team Straw Hat Pirates</div>
+        <p><strong>Raunak Kumar Gupta</strong>, team lead · <a href="https://github.com/Raunakg2005">github.com/Raunakg2005</a></p>
+        <p><strong>Krish Jain</strong> · <a href="https://github.com/krish2006-jain">github.com/krish2006-jain</a></p>
+        <p class="credits">Qiskit Fall Fest 2026, VTU Belagavi, in association with IBM Quantum.</p>
+      </div>
+      <div>
+        <div class="eyebrow">Sources</div>
+        <ul>
+          <li><a href="https://arxiv.org/abs/2505.15917">Gidney 2025, RSA-2048 with under a million noisy qubits</a></li>
+          <li><a href="https://arxiv.org/abs/1905.09749">Gidney and Ekerå 2019, RSA in 8 hours</a></li>
+          <li><a href="https://arxiv.org/abs/1706.06752">Roetteler et al. 2017, elliptic-curve resource estimates</a></li>
+          <li><a href="https://www.ibm.com/roadmaps/quantum/">IBM Quantum roadmap</a></li>
+          <li>NIST FIPS 203 (ML-KEM), FIPS 204 (ML-DSA); CycloneDX 1.6</li>
+        </ul>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script type="module">
+const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js";
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const fine = matchMedia("(pointer: fine)").matches;
+const gsap = window.gsap, ST = window.ScrollTrigger;
+const motion = !reduce && !!gsap && !!ST;
+const $ = id => document.getElementById(id);
+if ("scrollRestoration" in history) { history.scrollRestoration = "manual"; scrollTo(0, 0); }  // the intro starts at 2026's end of the tunnel
+
+// ---------------------------------------------------------------- forecast model (same numbers as qday/forecast)
+const RSA = { q: 1399, ops: 6.5e9 }, ECC = { q: 2330, ops: 1.287e11 };
+const GROWTH = Math.pow(10, 1 / 4);
+const YEARS = Array.from({ length: 25 }, (_, i) => 2026 + i);
+const LABEL = { safe: "safe for now", ready: "qubits ready", broken: "breakable" };
+let scenario = "trend", year = 2033;
+const machine = y => {
+  if (y < 2029) return { name: "None yet", q: 0, ops: 0 };
+  if (y < 2033) return { name: "Starling", q: 200, ops: 1e8 };
+  if (scenario === "roadmap" || y === 2033) return { name: "Blue Jay", q: 2000, ops: 1e9 };
+  const k = Math.pow(GROWTH, y - 2033);
+  return { name: "Projected", q: Math.round(2000 * k), ops: 1e9 * k };
+};
+const status = (req, m) => (m.q >= req.q && m.ops >= req.ops) ? "broken" : (m.q >= req.q ? "ready" : "safe");
+
+// flight: the slider picks the starting year, scrolling flies on to 2050
+const SPACING = 5, CAM_OFFSET = 6;
+const ringZ = i => -i * SPACING;
+const scrollP = () => { const max = document.documentElement.scrollHeight - innerHeight; return max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0; };
+const flightZ = p => { const z0 = ringZ(YEARS.indexOf(year)) + CAM_OFFSET, z1 = ringZ(YEARS.length - 1) + CAM_OFFSET; return z0 + (z1 - z0) * (reduce ? 0 : p); };
+const yearAt = z => YEARS[Math.min(YEARS.length - 1, Math.max(0, Math.round((CAM_OFFSET - z) / SPACING)))];
+
+let scene = null;
+function updatePanel() {
+  const m = machine(year);
+  $("year-out").textContent = year;
+  $("m-name").textContent = m.name;
+  $("m-q").textContent = m.q.toLocaleString("en-US");
+  for (const [id, req] of [["s-rsa", RSA], ["s-ecc", ECC]]) {
+    const s = status(req, m), node = $(id);
+    node.textContent = LABEL[s]; node.className = "c-" + s;
+  }
+}
+let hudYear = 0;
+function updateChrome() {
+  const p = scrollP();
+  $("progress").style.transform = `scaleX(${p})`;
+  $("nav").classList.toggle("scrolled", scrollY > 40);
+  $("hud").classList.toggle("on", scrollY > innerHeight * 0.6);
+  const y = yearAt(flightZ(p));
+  if (y !== hudYear) {
+    hudYear = y;
+    const m = machine(y);
+    $("hud-year").textContent = y;
+    for (const [k, req] of [["rsa", RSA], ["ecc", ECC]]) {
+      const s = status(req, m);
+      $(`hud-${k}`).textContent = LABEL[s]; $(`hud-${k}-dot`).className = "dot c-" + s;
+    }
+  }
+}
+function refreshAll() { hudYear = 0; updatePanel(); updateChrome(); if (scene) { scene.recolor(); scene.poke(); } }
+
+$("year").addEventListener("input", e => { year = Number(e.target.value); refreshAll(); });
+for (const [id, sc] of [["sc-trend", "trend"], ["sc-roadmap", "roadmap"]]) {
+  $(id).addEventListener("click", () => {
+    scenario = sc;
+    $("sc-trend").setAttribute("aria-pressed", sc === "trend");
+    $("sc-roadmap").setAttribute("aria-pressed", sc === "roadmap");
+    refreshAll();
+  });
+}
+
+// ---------------------------------------------------------------- smooth scrolling
+let lenis = null;
+if (motion && window.Lenis) {
+  lenis = new window.Lenis({ lerp: 0.09, smoothWheel: true });
+  lenis.on("scroll", () => { ST.update(); updateChrome(); });
+  gsap.ticker.add(t => lenis.raf(t * 1000));
+  gsap.ticker.lagSmoothing(0);
+} else {
+  addEventListener("scroll", updateChrome, { passive: true });
+}
+for (const a of document.querySelectorAll('a[href^="#"]')) {
+  a.addEventListener("click", e => {
+    const href = a.getAttribute("href"), target = href === "#top" ? 0 : document.querySelector(href);
+    if (target === null) return;
+    e.preventDefault();
+    if (lenis) lenis.scrollTo(target, { offset: -70, duration: 1.6 });
+    else if (target === 0) scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    else target.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+  });
+}
+addEventListener("resize", updateChrome);
+
+// ---------------------------------------------------------------- charts (drawn 1:1 to their width so text stays readable)
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs, parent, style) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (style) Object.assign(e.style, style); parent.appendChild(e); return e; };
+const text = (parent, x, y, s, anchor = "middle") => { const t = el("text", { x, y, "text-anchor": anchor }, parent); t.textContent = s; return t; };
+const H = 300, B = 248, TOP = 30, L = 44;
+const shor = [1097, 46, 817, 45, 1019, 40, 892, 44], ideal = new Set([0, 2, 4, 6]);
+const sweep = [
+  ["theory", [0.125, 0.781, 0.945, 0.33, 0.012], "#756879", "5 5"],
+  ["ibm_kingston", [0.121, 0.567, 0.681, 0.202, 0.067], "#e85291", ""],
+  ["ibm_fez", [0.118, 0.653, 0.589, 0.279, 0.091], "#392045", ""],
+  ["ibm_marrakesh", [0.125, 0.257, 0.218, 0.158, 0.14], "#e0a91f", ""],
+];
+const played = { shor: !motion, grover: !motion };
+
+function drawShor() {
+  const sv = $("shor-chart"), W = Math.max(260, Math.round(sv.getBoundingClientRect().width) || 480);
+  sv.replaceChildren(); sv.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const R = W - 6, depth = W < 420 ? 8 : 13, colW = (R - L - depth) / shor.length, bw = colW * 0.6;
+  const yy = v => B - (v / 1200) * (B - TOP);
+  for (const v of [0, 400, 800, 1200]) {
+    el("line", { x1: L, x2: R, y1: yy(v), y2: yy(v), class: "axis", "stroke-dasharray": v ? "3 4" : "" }, sv);
+    text(sv, L - 8, yy(v) + 4, String(v), "end");
+  }
+  const bars = [], vals = [];
+  shor.forEach((v, i) => {
+    const x = L + i * colW + (colW - bw) / 2, yTop = yy(v), hot = ideal.has(i);
+    const g = el("g", {}, sv);
+    el("polygon", { points: `${x + bw},${yTop} ${x + bw + depth},${yTop - depth * .6} ${x + bw + depth},${B - depth * .6} ${x + bw},${B}` }, g, { fill: hot ? "#b3245e" : "#b9a6dd" });
+    el("polygon", { points: `${x},${yTop} ${x + depth},${yTop - depth * .6} ${x + bw + depth},${yTop - depth * .6} ${x + bw},${yTop}` }, g, { fill: hot ? "#f7a8c8" : "#ece6fd" });
+    el("rect", { x, y: yTop, width: bw, height: B - yTop }, g, { fill: hot ? "#e85291" : "#dcd2fa" });
+    bars.push(g);
+    text(sv, x + bw / 2, B + 20, String(i));
+    if (hot) vals.push(text(sv, x + bw / 2 + depth / 2, yTop - depth - 4, String(v)));
+  });
+  text(sv, (L + R) / 2, H - 4, "measured value y");
+  if (!played.shor) { gsap.set(bars, { scaleY: 0, transformOrigin: "50% 100%" }); gsap.set(vals, { opacity: 0 }); }
+  return { bars, vals };
+}
+function drawGrover() {
+  const gv = $("grover-chart"), W = Math.max(260, Math.round(gv.getBoundingClientRect().width) || 480);
+  gv.replaceChildren(); gv.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const R = W - 14, gx = i => L + 12 + (i / 4) * (R - L - 12), gy = v => B - v * (B - TOP);
+  for (const v of [0, .25, .5, .75, 1]) {
+    el("line", { x1: L, x2: R, y1: gy(v), y2: gy(v), class: "axis", "stroke-dasharray": v ? "3 4" : "" }, gv);
+    text(gv, L - 8, gy(v) + 4, `${Math.round(v * 100)}%`, "end");
+  }
+  for (let i = 0; i <= 4; i++) text(gv, gx(i), B + 20, String(i));
+  text(gv, (L + R) / 2, H - 4, "Grover iterations");
+  const lines = [], dots = [];
+  for (const [, data, color, dash] of sweep) {
+    const pl = el("polyline", { points: data.map((v, i) => `${gx(i)},${gy(v)}`).join(" "), fill: "none", "stroke-width": 3, "stroke-linejoin": "round", "stroke-linecap": "round" }, gv, { stroke: color });
+    if (dash) pl.setAttribute("stroke-dasharray", dash);
+    lines.push([pl, !!dash]);
+    data.forEach((v, i) => dots.push(el("circle", { cx: gx(i), cy: gy(v), r: 4 }, gv, { fill: color })));
+  }
+  if (!played.grover) {
+    for (const [pl, dashed] of lines) {
+      if (dashed) { gsap.set(pl, { opacity: 0 }); continue; }
+      const len = pl.getTotalLength(); pl.style.strokeDasharray = len; pl.style.strokeDashoffset = len;
+    }
+    gsap.set(dots, { scale: 0, transformOrigin: "50% 50%" });
+  }
+  return { lines, dots };
+}
+const legend = $("grover-legend");
+for (const [name, , color] of sweep) { const s = document.createElement("span"); s.innerHTML = `<i style="background:${color}"></i>${name}`; legend.appendChild(s); }
+
+let shorParts = drawShor(), groverParts = drawGrover(), lastW = 0, rt;
+new ResizeObserver(([e]) => {
+  const w = Math.round(e.contentRect.width); if (w === lastW) return; lastW = w;
+  clearTimeout(rt); rt = setTimeout(() => { shorParts = drawShor(); groverParts = drawGrover(); }, 120);
+}).observe($("shor-fig"));
+
+// ---------------------------------------------------------------- scroll animation
+if (motion) {
+  gsap.registerPlugin(ST);
+  const intro = gsap.timeline({ defaults: { ease: "expo.out" } });
+  intro.from(".title .w > *", { yPercent: 115, rotate: 6, duration: 1.3, stagger: 0.08 })
+       .from("[data-intro]", { y: 24, opacity: 0, duration: 1, stagger: 0.08 }, 0.25)
+       .from("#panel", { y: 60, rotateX: 18, rotateY: -12, opacity: 0, duration: 1.4, transformPerspective: 1200 }, 0.35)
+       .from(".scroll-cue", { opacity: 0, duration: 1 }, 1);
+
+  for (const node of document.querySelectorAll("[data-reveal]")) {
+    gsap.from(node, { y: 70, opacity: 0, rotateX: 10, transformPerspective: 1000, transformOrigin: "50% 0%", duration: 1.2, ease: "power4.out",
+      scrollTrigger: { trigger: node, start: "top 88%" } });
+  }
+  for (const group of document.querySelectorAll("[data-stagger]")) {
+    gsap.from(group.children, { y: 90, opacity: 0, rotateX: 14, rotateY: -6, transformPerspective: 1000, duration: 1.2, ease: "power4.out", stagger: 0.1,
+      clearProps: "transform", scrollTrigger: { trigger: group, start: "top 86%" } });
+  }
+  for (const n of document.querySelectorAll("[data-count]")) {
+    const to = Number(n.dataset.count), from = Number(n.dataset.from || 0), plain = "plain" in n.dataset, o = { v: from };
+    const fmt = v => plain ? String(Math.round(v)) : Math.round(v).toLocaleString("en-US");
+    n.textContent = fmt(from);
+    gsap.to(o, { v: to, duration: 2, ease: "power3.out", onUpdate: () => { n.textContent = fmt(o.v); },
+      scrollTrigger: { trigger: n, start: "top 92%", once: true } });
+  }
+  ST.create({ trigger: "#shor-fig", start: "top 75%", once: true, onEnter: () => {
+    played.shor = true;
+    gsap.to(shorParts.bars, { scaleY: 1, duration: 1.4, ease: "elastic.out(1, .55)", stagger: 0.07 });
+    gsap.to(shorParts.vals, { opacity: 1, duration: .6, delay: .7, stagger: 0.1 });
+  } });
+  ST.create({ trigger: "#grover-fig", start: "top 75%", once: true, onEnter: () => {
+    played.grover = true;
+    groverParts.lines.forEach(([pl, dashed], i) => dashed
+      ? gsap.to(pl, { opacity: 1, duration: 1, delay: 0.2 })
+      : gsap.to(pl, { strokeDashoffset: 0, duration: 1.8, ease: "power2.inOut", delay: 0.2 + i * 0.15 }));
+    gsap.to(groverParts.dots, { scale: 1, duration: .5, ease: "back.out(3)", stagger: 0.03, delay: 0.6 });
+  } });
+  gsap.from(".bars .fill", { scaleX: 0, duration: 1.6, ease: "power3.out", stagger: 0.1, scrollTrigger: { trigger: ".bars", start: "top 85%" } });
+  gsap.from(".code span", { opacity: 0, x: -14, duration: .5, stagger: 0.12, scrollTrigger: { trigger: ".term", start: "top 80%" } });
+  gsap.to(".hero-copy", { yPercent: -14, opacity: 0.25, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
+
+  if (fine) {
+    for (const card of document.querySelectorAll(".tilt")) {
+      card.addEventListener("pointermove", e => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty("--ty", `${((e.clientX - r.left) / r.width - 0.5) * 10}deg`);
+        card.style.setProperty("--tx", `${-((e.clientY - r.top) / r.height - 0.5) * 10}deg`);
+      });
+      card.addEventListener("pointerleave", () => { card.style.removeProperty("--tx"); card.style.removeProperty("--ty"); });
+    }
+    for (const b of document.querySelectorAll("[data-magnet]")) {
+      const xTo = gsap.quickTo(b, "x", { duration: .5, ease: "power3" }), yTo = gsap.quickTo(b, "y", { duration: .5, ease: "power3" });
+      b.addEventListener("pointermove", e => { const r = b.getBoundingClientRect(); xTo((e.clientX - r.left - r.width / 2) * .3); yTo((e.clientY - r.top - r.height / 2) * .4); });
+      b.addEventListener("pointerleave", () => { xTo(0); yTo(0); });
+    }
+  }
+}
+updatePanel(); updateChrome();
+
+// ---------------------------------------------------------------- three.js time tunnel (loaded after first paint)
+let mx = 0, my = 0;
+if (fine) addEventListener("pointermove", e => { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; }, { passive: true });
+
+async function initScene() {
+  let THREE;
+  try { THREE = await import(THREE_URL); } catch { return; }
+  const canvas = $("scene");
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" }); } catch { return; }
+  const small = innerWidth < 760;
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.5 : 1.75));
+  renderer.setClearColor(0xf4efff, 0);  // transparent: the page's lavender grid shows through
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  const world = new THREE.Scene();
+  world.fog = new THREE.Fog(0xf4efff, 16, 72);  // distant rings melt into the page background
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
+
+  // lights: soft lavender sky, a white key light, and pink / violet lights that travel with the camera
+  world.add(new THREE.HemisphereLight(0xffffff, 0xcdbff5, 1.5));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+  sun.position.set(6, 10, 12);
+  world.add(sun);
+  const pinkLight = new THREE.PointLight(0xff7ab2, 120, 45, 2);
+  const violetLight = new THREE.PointLight(0x8f72e0, 90, 45, 2);
+  world.add(pinkLight, violetLight);
+
+  try { await document.fonts.load("600 80px Fraunces"); } catch {}
+  const label = y => {
+    const c = document.createElement("canvas"); c.width = 256; c.height = 112;
+    const x = c.getContext("2d"); x.font = "600 84px Fraunces, Georgia, serif"; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillStyle = "#392045"; x.fillText(String(y), 128, 60);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+    s.scale.set(1.5, 0.66, 1); return s;
+  };
+
+  // year rings: glossy tori with a notched bezel, colored by what a machine of that year can break
+  const [radial, tubular] = small ? [10, 96] : [18, 180];
+  const outerGeo = new THREE.TorusGeometry(4, 0.13, radial, tubular);
+  const innerGeo = new THREE.TorusGeometry(2.7, 0.1, radial, tubular);
+  const notchGeo = new THREE.BoxGeometry(0.07, 0.34, 0.07);
+  const NOTCHES = 24, holder = new THREE.Object3D();
+  const gloss = () => new THREE.MeshStandardMaterial({ roughness: .26, metalness: .35, emissiveIntensity: .12, transparent: true });
+  const rings = YEARS.map((y, i) => {
+    const g = new THREE.Group(); g.position.z = ringZ(i);
+    const o = new THREE.Mesh(outerGeo, gloss()), n = new THREE.Mesh(innerGeo, gloss());
+    const notches = new THREE.InstancedMesh(notchGeo, new THREE.MeshStandardMaterial({ color: 0x392045, roughness: .4, metalness: .5, transparent: true }), NOTCHES);
+    for (let k = 0; k < NOTCHES; k++) {
+      const a = k / NOTCHES * Math.PI * 2;
+      holder.position.set(Math.cos(a) * 4.42, Math.sin(a) * 4.42, 0);
+      holder.rotation.set(0, 0, a - Math.PI / 2);
+      holder.scale.setScalar(k % 6 === 0 ? 1.6 : 1);
+      holder.updateMatrix(); notches.setMatrixAt(k, holder.matrix);
+    }
+    const l = label(y); l.position.set(0, 3.35, 0);
+    g.add(o, n, notches, l); world.add(g);
+    return { g, o, n, notches, l, phase: Math.random() * Math.PI * 2 };
+  });
+  const COL = { safe: new THREE.Color("#2f8f6b"), ready: new THREE.Color("#e0a91f"), broken: new THREE.Color("#e85291") };
+  function recolor() {
+    rings.forEach((r, i) => {
+      const m = machine(YEARS[i]);
+      for (const [mesh, req] of [[r.o, RSA], [r.n, ECC]]) {
+        const c = COL[status(req, m)];
+        mesh.material.color.copy(c); mesh.material.emissive.copy(c);
+      }
+    });
+  }
+  recolor();
+
+  // shockwave: a ring that bursts outward from the chosen year when it changes
+  const wave = new THREE.Mesh(new THREE.TorusGeometry(4, 0.06, 8, 160),
+                              new THREE.MeshBasicMaterial({ color: 0xe85291, transparent: true, opacity: 0, depthWrite: false }));
+  world.add(wave);
+  let waveT = 1;
+
+  // qubit gems: faceted crystals drifting and spinning through the tunnel
+  const GEMS = small ? 70 : 170, depthAll = SPACING * YEARS.length + 20;
+  const gems = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.17, 0),
+                                       new THREE.MeshStandardMaterial({ roughness: .18, metalness: .45, flatShading: true }), GEMS);
+  const gemData = Array.from({ length: GEMS }, () => ({
+    a: Math.random() * Math.PI * 2, r: 1.1 + Math.random() * 2.3,  // inside the tunnel, clear of the page text
+    z: 8 - Math.random() * depthAll, w: (Math.random() - .5) * .35, spin: .4 + Math.random() * 1.2,
+    s: .6 + Math.random() * 1.1, bob: Math.random() * Math.PI * 2,
+  }));
+  const GEM_COLORS = ["#e85291", "#7a5cb8", "#f4c84e", "#392045", "#2f8f6b", "#f7a8c8"].map(c => new THREE.Color(c));
+  gemData.forEach((_, i) => gems.setColorAt(i, GEM_COLORS[i % GEM_COLORS.length]));
+  world.add(gems);
+
+  // Q-Day core at the end of the tunnel: a faceted crystal in a wire cage, circled by three electrons
+  const core = new THREE.Group(); core.position.z = ringZ(YEARS.length - 1) - 9;
+  const crystal = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 0), new THREE.MeshStandardMaterial({
+    color: 0xe85291, emissive: 0xb3245e, emissiveIntensity: .3, roughness: .2, metalness: .35, flatShading: true, transparent: true }));
+  const cage = new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(2.5, 1)),
+                                     new THREE.LineBasicMaterial({ color: 0x392045, transparent: true, opacity: .45 }));
+  const orbits = [0, 1, 2].map(k => {
+    const o = new THREE.Group(); o.rotation.set(k * 1.05 + .4, k * .7, 0);
+    o.add(new THREE.Mesh(new THREE.TorusGeometry(3.3, 0.018, 6, 120), new THREE.MeshBasicMaterial({ color: 0x7a5cb8, transparent: true, opacity: .5 })));
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), new THREE.MeshStandardMaterial({ color: [0xf4c84e, 0x7a5cb8, 0x2f8f6b][k], roughness: .25, metalness: .4 }));
+    e.position.x = 3.3; o.add(e); core.add(o); return o;
+  });
+  const coreLight = new THREE.PointLight(0xff8cbc, 60, 20, 2);
+  core.add(crystal, cage, coreLight); world.add(core);
+
+  function resize() {
+    const w = innerWidth, h = innerHeight;
+    renderer.setSize(w, h, false);
+    // put the vanishing point in open space: upper right beside the headline on desktop, above it on narrow screens
+    const wide = w >= 1024, fx = wide ? .72 : .5, fy = wide ? .36 : .2;
+    camera.aspect = w / h; camera.fov = w / h < .8 ? 70 : 58;
+    camera.setViewOffset(w, h, -(fx - .5) * w, -(fy - .5) * h, w, h);
+  }
+  resize(); addEventListener("resize", resize);
+
+  let camZ = flightZ(scrollP()), t = 0, last = performance.now(), pmx = 0, pmy = 0;
+  function render(now = performance.now()) {
+    const dt = Math.min(.05, Math.max(0, (now - last) / 1000)); last = now;
+    if (!reduce) t += dt;
+    const p = scrollP(), target = flightZ(p);
+    camZ = reduce ? target : camZ + (target - camZ) * Math.min(1, dt * 3.2);
+    pmx += (mx - pmx) * Math.min(1, dt * 2.5); pmy += (my - pmy) * Math.min(1, dt * 2.5);
+    const sx = reduce ? 0 : Math.sin(p * Math.PI * 2) * 1.4, sy = reduce ? 0 : Math.sin(p * Math.PI * 3) * .55;
+    camera.position.set(sx + pmx * 1.8, sy - pmy * 1.2, camZ);
+    camera.lookAt(sx * .3 - pmx * .6, sy * .3 + pmy * .4, camZ - 14);
+    camera.rotateZ(reduce ? 0 : p * .7 + Math.sin(t * .25) * .03);
+    pinkLight.position.set(camera.position.x + 3, camera.position.y + 2.5, camZ - 7);
+    violetLight.position.set(camera.position.x - 3.5, camera.position.y - 2, camZ - 12);
+
+    // past the hero the tunnel becomes a quiet backdrop: rings fade and the year numbers leave the text alone
+    const past = Math.min(1, scrollY / (innerHeight * .7));
+    const focus = Math.round((CAM_OFFSET - camZ) / SPACING), dim = 1 - .62 * past;
+    rings.forEach((r, i) => {
+      const d = camZ - r.g.position.z, near = Math.min(1, Math.max(0, (d - 2.2) / 2.5));  // rings beside the camera fade out
+      const on = i === focus ? 1 : 0;
+      const alpha = (.82 + .18 * on) * near * dim;
+      r.o.material.opacity = r.n.material.opacity = alpha;
+      r.o.material.emissiveIntensity = r.n.material.emissiveIntensity = .12 + .45 * on * (.75 + .25 * Math.sin(t * 3));
+      r.notches.material.opacity = alpha * .9;
+      r.notches.rotation.z = t * (i % 2 ? .12 : -.09) + i * .3;
+      r.g.rotation.x = Math.sin(t * .5 + r.phase) * .05;
+      r.g.rotation.y = Math.cos(t * .4 + r.phase) * .05;
+      r.g.scale.setScalar(1 + on * .025 * Math.sin(t * 3));
+      r.l.material.opacity = (.35 + .65 * on) * near * Math.max(0, 1 - (d - CAM_OFFSET) / 26) * (1 - past);
+    });
+
+    if (waveT < 1) {
+      waveT = Math.min(1, waveT + dt / 1.3);
+      const i = YEARS.indexOf(year), e = 1 - Math.pow(1 - waveT, 3);
+      wave.position.z = ringZ(i);
+      wave.scale.setScalar(1 + e * 1.8);
+      wave.material.color.copy(COL[status(RSA, machine(year))]);
+      wave.material.opacity = (1 - waveT) * .85 * dim;
+    }
+
+    gemData.forEach((g, i) => {
+      const a = g.a + t * g.w;
+      holder.position.set(Math.cos(a) * g.r, Math.sin(a) * g.r + Math.sin(t + g.bob) * .15, g.z);
+      holder.rotation.set(t * g.spin, t * g.spin * .7, 0);
+      const ahead = camZ - g.z;  // gems right next to the camera would fly across the text: fade them in with distance
+      holder.scale.setScalar(g.s * (1 - .35 * past) * Math.min(1, Math.max(0, (ahead - 2.5) / 3)));
+      holder.updateMatrix(); gems.setMatrixAt(i, holder.matrix);
+    });
+    gems.instanceMatrix.needsUpdate = true;
+
+    crystal.rotation.set(t * .35, t * .5, 0);
+    cage.rotation.set(-t * .2, t * .15, 0);
+    orbits.forEach((o, k) => { o.rotation.z = t * (.6 + k * .25); });
+    crystal.material.opacity = 1 - .4 * past; cage.material.opacity = .45 - .2 * past;
+    renderer.render(world, camera);
+    canvas.classList.add("ready");
+  }
+  if (reduce) {
+    render();
+    addEventListener("scroll", () => requestAnimationFrame(render), { passive: true });
+    addEventListener("resize", () => requestAnimationFrame(render));
+  } else {
+    const run = () => renderer.setAnimationLoop(document.hidden ? null : render);
+    run(); document.addEventListener("visibilitychange", run);
+  }
+  scene = { recolor, poke: () => { if (reduce) requestAnimationFrame(render); else waveT = 0; } };
+}
+const later = window.requestIdleCallback ? fn => requestIdleCallback(fn, { timeout: 800 }) : fn => setTimeout(fn, 200);
+if (document.readyState === "complete") later(initScene);
+else addEventListener("load", () => later(initScene));
+</script>

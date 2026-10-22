@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: pip install -e ".[app,dev]"
+      - name: Lint
+        run: ruff check .
+      - name: Tests (no network, no QPU)
+        run: pytest -m "not network and not hardware" --cov=qday --cov-report=term --cov-report=xml
+      - name: Scan the sample app with the CLI (must flag critical findings)
+        run: |
+          set +e
+          qday scan --path samples/legacy_app --fail-on critical
+          test $? -eq 1
+      - name: Results document matches the raw hardware data
+        run: python scripts/summarize_results.py --check
+
+  secrets:
+    # Fails on any live (verified) credential in the history; the sample app's fake keys are not live
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: trufflesecurity/trufflehog@v3.97.9
+        with:
+          extra_args: --only-verified

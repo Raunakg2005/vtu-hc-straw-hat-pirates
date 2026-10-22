@@ -1,0 +1,26 @@
+# Palette and shapes follow the Qiskit Fall Fest 2026 (VTU) site design tokens.
+[theme]
+base = "light"
+primaryColor = "#e85291"
+backgroundColor = "#f4efff"
+secondaryBackgroundColor = "#fff9f3"
+textColor = "#392045"
+linkColor = "#e85291"
+borderColor = "#d8cadc"
+dataframeBorderColor = "#d8cadc"
+dataframeHeaderBackgroundColor = "#dcd2fa"
+baseRadius = "1.15rem"
+buttonRadius = "999px"
+showWidgetBorder = true
+showSidebarBorder = true
+chartCategoricalColors = ["#392045", "#e85291", "#b9a6dd", "#f4c84e", "#7a5cb8", "#f5a4c4"]
+
+[theme.sidebar]
+backgroundColor = "#fff9f3"
+secondaryBackgroundColor = "#f4efff"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
