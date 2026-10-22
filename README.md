@@ -17,6 +17,7 @@ VTU-QFF Hackathon — Qiskit Fall Fest 2026
 **[Architecture](docs/ARCHITECTURE.md)**
 
 [![CI](https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates/actions/workflows/ci.yml/badge.svg)](https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/qday-time-machine)](https://pypi.org/project/qday-time-machine/)
 
 </div>
 
@@ -303,6 +304,8 @@ run `python scripts/hardware_suite.py submit --backend ibm_kingston`. `.env` is 
 the Docker image.
 
 ## Command line
+
+The CLI is on PyPI: `pip install qday-time-machine`.
 
 ```bash
 qday scan --host example.com --path ./src     # findings, risk, break year and the fix

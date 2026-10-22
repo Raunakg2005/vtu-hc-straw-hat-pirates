@@ -142,7 +142,8 @@ Open the sidebar with the **Settings** button at the top left. These change the 
 ## Command line
 
 The `qday` command does everything the Scan and Time Machine tabs do, plus the attacks, and fits into scripts and
-CI.
+CI. Install it on its own with `pip install qday-time-machine`
+([PyPI](https://pypi.org/project/qday-time-machine/)); the dashboard needs the full repository.
 
 ```text
 qday scan     [--host H]... [--path DIR] [--insecure] [--scenario S] [--rsa-source R]
@@ -218,7 +219,7 @@ qday pqc                        # {"keys_match": true, "message_roundtrip": true
 ### Using it in CI
 
 ```yaml
-- run: pip install "git+https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates.git"
+- run: pip install qday-time-machine
 - run: qday scan --path . --fail-on critical
 ```
 
