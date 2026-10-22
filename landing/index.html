@@ -289,8 +289,8 @@ footer .team { display: grid; gap: .4rem; }
           <span class="w" aria-hidden="true"><span>your</span></span> <span class="w" aria-hidden="true"><em>encryption</em></span>
           <span class="w" aria-hidden="true"><span>die?</span></span>
         </h1>
-        <p class="lede" data-intro>You are flying through IBM's quantum roadmap in a time tunnel. Every clock is one year: its outer rim is
-          RSA-2048, its inner rim ECDSA P-256, colored by whether a quantum computer of that year could break it. Scroll to keep flying.</p>
+        <p class="lede" data-intro>You are flying through IBM's quantum roadmap. Every ring is one year: the outer ring is RSA-2048,
+          the inner ring is ECDSA P-256, colored by whether a quantum computer of that year could break it. Scroll to keep flying.</p>
         <div class="actions" data-intro>
           <a class="btn primary" href="/app/" data-magnet>Launch the app
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
@@ -732,148 +732,81 @@ async function initScene() {
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.5 : 1.75));
   renderer.setClearColor(0xf4efff, 0);  // transparent: the page's lavender grid shows through
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.1;
   const world = new THREE.Scene();
-  world.fog = new THREE.Fog(0xf4efff, 18, 70);
+  world.fog = new THREE.Fog(0xf4efff, 16, 72);  // distant rings melt into the page background
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 300);
 
-  world.add(new THREE.HemisphereLight(0xffffff, 0xd9ccff, 1.7));
-  const sun = new THREE.DirectionalLight(0xffffff, 2.0);
-  sun.position.set(5, 9, 12);
+  // lights: soft lavender sky, a white key light, and pink / violet lights that travel with the camera
+  world.add(new THREE.HemisphereLight(0xffffff, 0xcdbff5, 1.5));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+  sun.position.set(6, 10, 12);
   world.add(sun);
-  const pinkLight = new THREE.PointLight(0xff8cbc, 80, 40, 2);
-  const skyLight = new THREE.PointLight(0x8fc9ff, 70, 40, 2);
-  world.add(pinkLight, skyLight);
+  const pinkLight = new THREE.PointLight(0xff7ab2, 120, 45, 2);
+  const violetLight = new THREE.PointLight(0x8f72e0, 90, 45, 2);
+  world.add(pinkLight, violetLight);
 
-  // ---- the time tunnel: a wavy, swirling pastel tube in the spirit of Doraemon's time-space corridor
-  const zStart = 30, zEnd = ringZ(YEARS.length - 1) - 30, tunnelLen = zStart - zEnd;
-  const tubeGeo = new THREE.CylinderGeometry(7.5, 7.5, tunnelLen, small ? 64 : 120, small ? 160 : 320, true);
-  tubeGeo.rotateX(Math.PI / 2);
-  const hex = c => new THREE.Color(c);
-  const tunnelMat = new THREE.ShaderMaterial({
-    side: THREE.BackSide, transparent: true, depthWrite: false,
-    uniforms: {
-      uTime: { value: 0 }, uOpacity: { value: .9 }, uFog: { value: hex("#f4efff") },
-      c1: { value: hex("#c9b8ff") }, c2: { value: hex("#ffb3d4") }, c3: { value: hex("#a8dcff") },
-      c4: { value: hex("#ffe29a") }, c5: { value: hex("#b8f0d8") },
-    },
-    vertexShader: `
-      uniform float uTime;
-      varying vec3 vPos; varying float vDepth;
-      void main() {
-        vec3 p = position;
-        float a = atan(p.y, p.x);
-        // breathing, warped walls: time-space ripples along the tunnel
-        float wob = sin(p.z * .16 + uTime * .9 + a * 3.0) * .5 + sin(p.z * .045 - uTime * .45) * .8;
-        p.xy *= 1.0 + wob * .07;
-        vPos = p;
-        vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        vDepth = -mv.z;
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: `
-      uniform float uTime, uOpacity;
-      uniform vec3 uFog, c1, c2, c3, c4, c5;
-      varying vec3 vPos; varying float vDepth;
-      void main() {
-        float a = atan(vPos.y, vPos.x), z = vPos.z;
-        float swirl = a * 2.0 + z * .13 - uTime * .7 + sin(z * .06 + uTime * .35) * 1.6;
-        float t1 = .5 + .5 * sin(swirl);
-        float t2 = .5 + .5 * sin(a * 3.0 - z * .09 + uTime * .5);
-        float t3 = .5 + .5 * sin(a * 5.0 + z * .21 - uTime * 1.1);
-        vec3 col = mix(mix(c1, c2, t1), mix(c3, c4, t1), t2);
-        col = mix(col, c5, smoothstep(.75, 1.0, t3) * .55);
-        float ribbon = smoothstep(.9, 1.0, sin(swirl * 3.0));          // bright swirling ribbons
-        col = mix(col, vec3(1.0), ribbon * .55);
-        float fog = smoothstep(12.0, 70.0, vDepth);
-        col = mix(col, uFog, fog);
-        gl_FragColor = vec4(col, uOpacity * (1.0 - fog * .5));
-      }`,
-  });
-  const tunnel = new THREE.Mesh(tubeGeo, tunnelMat);
-  tunnel.position.z = (zStart + zEnd) / 2;
-  world.add(tunnel);
-
-  // ---- year clocks: one floating clock per year; rims colored by what a machine of that year can break
   try { await document.fonts.load("600 80px Fraunces"); } catch {}
-  const faceTexture = y => {
-    const c = document.createElement("canvas"); c.width = c.height = 512;
-    const x = c.getContext("2d");
-    x.fillStyle = "#fff9f3"; x.beginPath(); x.arc(256, 256, 250, 0, Math.PI * 2); x.fill();
-    x.strokeStyle = "#392045"; x.lineCap = "round";
-    for (let k = 0; k < 60; k++) {
-      const a = k / 60 * Math.PI * 2, major = k % 5 === 0, r0 = major ? 200 : 214;
-      x.lineWidth = major ? 9 : 4;
-      x.beginPath(); x.moveTo(256 + Math.cos(a) * r0, 256 + Math.sin(a) * r0);
-      x.lineTo(256 + Math.cos(a) * 232, 256 + Math.sin(a) * 232); x.stroke();
-    }
-    x.fillStyle = "#e85291"; x.font = "600 46px Fraunces, Georgia, serif"; x.textAlign = "center"; x.textBaseline = "middle";
-    [["12", 0, -150], ["3", 150, 0], ["6", 0, 150], ["9", -150, 0]].forEach(([s, dx, dy]) => x.fillText(s, 256 + dx, 256 + dy));
-    x.fillStyle = "#392045"; x.font = "600 92px Fraunces, Georgia, serif"; x.fillText(String(y), 256, 330);
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 4;
-    return tex;
+  const label = y => {
+    const c = document.createElement("canvas"); c.width = 256; c.height = 112;
+    const x = c.getContext("2d"); x.font = "600 84px Fraunces, Georgia, serif"; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillStyle = "#392045"; x.fillText(String(y), 128, 60);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+    s.scale.set(1.5, 0.66, 1); return s;
   };
-  const [radial, tubular] = small ? [10, 72] : [16, 120];
-  const rimGeo = new THREE.TorusGeometry(1.08, 0.11, radial, tubular);
-  const innerGeo = new THREE.TorusGeometry(0.9, 0.05, radial, tubular);
-  const faceGeo = new THREE.CircleGeometry(1, 64);
-  const bodyGeo = new THREE.CylinderGeometry(1.08, 1.0, 0.28, 64, 1);
-  bodyGeo.rotateX(Math.PI / 2);
-  const hourGeo = new THREE.BoxGeometry(0.07, 0.48, 0.03); hourGeo.translate(0, 0.22, 0);
-  const minGeo = new THREE.BoxGeometry(0.045, 0.72, 0.03); minGeo.translate(0, 0.34, 0);
-  const capGeo = new THREE.SphereGeometry(0.07, 16, 12);
-  const gloss = () => new THREE.MeshStandardMaterial({ roughness: .25, metalness: .3, emissiveIntensity: .15, transparent: true });
-  const clocks = YEARS.map((y, i) => {
-    const g = new THREE.Group();
-    const ang = i * 2.39996 + .8, rad = 2.7 + (i % 3) * .35;  // golden-angle spiral around the tunnel
-    g.position.set(Math.cos(ang) * rad, Math.sin(ang) * rad, ringZ(i));
-    const body = new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({ color: 0x392045, roughness: .5, metalness: .2, transparent: true }));
-    body.position.z = -0.16;
-    const face = new THREE.Mesh(faceGeo, new THREE.MeshStandardMaterial({ map: faceTexture(y), roughness: .7, transparent: true }));
-    face.position.z = 0.0;
-    const rim = new THREE.Mesh(rimGeo, gloss()), inner = new THREE.Mesh(innerGeo, gloss());
-    rim.position.z = 0.02; inner.position.z = 0.04;
-    const handMat = new THREE.MeshStandardMaterial({ color: 0x392045, roughness: .4, transparent: true });
-    const hour = new THREE.Mesh(hourGeo, handMat), minute = new THREE.Mesh(minGeo, handMat);
-    hour.position.z = minute.position.z = 0.07;
-    const cap = new THREE.Mesh(capGeo, new THREE.MeshStandardMaterial({ color: 0xe85291, roughness: .3, transparent: true }));
-    cap.position.z = 0.09;
-    g.add(body, face, rim, inner, hour, minute, cap);
-    world.add(g);
-    return { g, rim, inner, hour, minute, mats: [body.material, face.material, handMat, cap.material], phase: Math.random() * Math.PI * 2, base: g.position.clone() };
+
+  // year rings: glossy tori with a notched bezel, colored by what a machine of that year can break
+  const [radial, tubular] = small ? [10, 96] : [18, 180];
+  const outerGeo = new THREE.TorusGeometry(4, 0.13, radial, tubular);
+  const innerGeo = new THREE.TorusGeometry(2.7, 0.1, radial, tubular);
+  const notchGeo = new THREE.BoxGeometry(0.07, 0.34, 0.07);
+  const NOTCHES = 24, holder = new THREE.Object3D();
+  const gloss = () => new THREE.MeshStandardMaterial({ roughness: .26, metalness: .35, emissiveIntensity: .12, transparent: true });
+  const rings = YEARS.map((y, i) => {
+    const g = new THREE.Group(); g.position.z = ringZ(i);
+    const o = new THREE.Mesh(outerGeo, gloss()), n = new THREE.Mesh(innerGeo, gloss());
+    const notches = new THREE.InstancedMesh(notchGeo, new THREE.MeshStandardMaterial({ color: 0x392045, roughness: .4, metalness: .5, transparent: true }), NOTCHES);
+    for (let k = 0; k < NOTCHES; k++) {
+      const a = k / NOTCHES * Math.PI * 2;
+      holder.position.set(Math.cos(a) * 4.42, Math.sin(a) * 4.42, 0);
+      holder.rotation.set(0, 0, a - Math.PI / 2);
+      holder.scale.setScalar(k % 6 === 0 ? 1.6 : 1);
+      holder.updateMatrix(); notches.setMatrixAt(k, holder.matrix);
+    }
+    const l = label(y); l.position.set(0, 3.35, 0);
+    g.add(o, n, notches, l); world.add(g);
+    return { g, o, n, notches, l, phase: Math.random() * Math.PI * 2 };
   });
-  const COL = { safe: hex("#2f8f6b"), ready: hex("#e0a91f"), broken: hex("#e85291") };
+  const COL = { safe: new THREE.Color("#2f8f6b"), ready: new THREE.Color("#e0a91f"), broken: new THREE.Color("#e85291") };
   function recolor() {
-    clocks.forEach((c, i) => {
+    rings.forEach((r, i) => {
       const m = machine(YEARS[i]);
-      for (const [mesh, req] of [[c.rim, RSA], [c.inner, ECC]]) {
-        const col = COL[status(req, m)];
-        mesh.material.color.copy(col); mesh.material.emissive.copy(col);
+      for (const [mesh, req] of [[r.o, RSA], [r.n, ECC]]) {
+        const c = COL[status(req, m)];
+        mesh.material.color.copy(c); mesh.material.emissive.copy(c);
       }
     });
   }
   recolor();
 
-  // shockwave around the chosen year's clock when the year changes
-  const wave = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.04, 8, 96),
+  // shockwave: a ring that bursts outward from the chosen year when it changes
+  const wave = new THREE.Mesh(new THREE.TorusGeometry(4, 0.06, 8, 160),
                               new THREE.MeshBasicMaterial({ color: 0xe85291, transparent: true, opacity: 0, depthWrite: false }));
   world.add(wave);
   let waveT = 1;
 
-  // sparkles: little pastel crystals drifting along the tunnel
-  const SPARKS = small ? 60 : 140, depthAll = SPACING * YEARS.length + 20;
-  const sparks = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.12, 0),
-                                         new THREE.MeshStandardMaterial({ roughness: .2, metalness: .3, flatShading: true }), SPARKS);
-  const sparkData = Array.from({ length: SPARKS }, () => ({
-    a: Math.random() * Math.PI * 2, r: 1.2 + Math.random() * 4.6, z: 8 - Math.random() * depthAll,
-    w: (Math.random() - .5) * .5, spin: .5 + Math.random() * 1.5, s: .6 + Math.random(), bob: Math.random() * Math.PI * 2,
+  // qubit gems: faceted crystals drifting and spinning through the tunnel
+  const GEMS = small ? 70 : 170, depthAll = SPACING * YEARS.length + 20;
+  const gems = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.17, 0),
+                                       new THREE.MeshStandardMaterial({ roughness: .18, metalness: .45, flatShading: true }), GEMS);
+  const gemData = Array.from({ length: GEMS }, () => ({
+    a: Math.random() * Math.PI * 2, r: 1.1 + Math.random() * 2.3,  // inside the tunnel, clear of the page text
+    z: 8 - Math.random() * depthAll, w: (Math.random() - .5) * .35, spin: .4 + Math.random() * 1.2,
+    s: .6 + Math.random() * 1.1, bob: Math.random() * Math.PI * 2,
   }));
-  const SPARK_COLORS = ["#e85291", "#7a5cb8", "#f4c84e", "#5bb8f0", "#2f8f6b", "#ff9cc6"].map(hex);
-  sparkData.forEach((_, i) => sparks.setColorAt(i, SPARK_COLORS[i % SPARK_COLORS.length]));
-  world.add(sparks);
-  const holder = new THREE.Object3D();
+  const GEM_COLORS = ["#e85291", "#7a5cb8", "#f4c84e", "#392045", "#2f8f6b", "#f7a8c8"].map(c => new THREE.Color(c));
+  gemData.forEach((_, i) => gems.setColorAt(i, GEM_COLORS[i % GEM_COLORS.length]));
+  world.add(gems);
 
   // Q-Day core at the end of the tunnel: a faceted crystal in a wire cage, circled by three electrons
   const core = new THREE.Group(); core.position.z = ringZ(YEARS.length - 1) - 9;
@@ -884,10 +817,11 @@ async function initScene() {
   const orbits = [0, 1, 2].map(k => {
     const o = new THREE.Group(); o.rotation.set(k * 1.05 + .4, k * .7, 0);
     o.add(new THREE.Mesh(new THREE.TorusGeometry(3.3, 0.018, 6, 120), new THREE.MeshBasicMaterial({ color: 0x7a5cb8, transparent: true, opacity: .5 })));
-    const e = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), new THREE.MeshStandardMaterial({ color: [0xf4c84e, 0x5bb8f0, 0x2f8f6b][k], roughness: .25, metalness: .4 }));
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), new THREE.MeshStandardMaterial({ color: [0xf4c84e, 0x7a5cb8, 0x2f8f6b][k], roughness: .25, metalness: .4 }));
     e.position.x = 3.3; o.add(e); core.add(o); return o;
   });
-  core.add(crystal, cage, new THREE.PointLight(0xff8cbc, 60, 20, 2)); world.add(core);
+  const coreLight = new THREE.PointLight(0xff8cbc, 60, 20, 2);
+  core.add(crystal, cage, coreLight); world.add(core);
 
   function resize() {
     const w = innerWidth, h = innerHeight;
@@ -906,48 +840,48 @@ async function initScene() {
     const p = scrollP(), target = flightZ(p);
     camZ = reduce ? target : camZ + (target - camZ) * Math.min(1, dt * 3.2);
     pmx += (mx - pmx) * Math.min(1, dt * 2.5); pmy += (my - pmy) * Math.min(1, dt * 2.5);
-    const sx = reduce ? 0 : Math.sin(p * Math.PI * 2) * 1.2, sy = reduce ? 0 : Math.sin(p * Math.PI * 3) * .5;
-    camera.position.set(sx + pmx * 1.6, sy - pmy * 1.1, camZ);
-    camera.lookAt(sx * .3 - pmx * .5, sy * .3 + pmy * .4, camZ - 14);
-    camera.rotateZ(reduce ? 0 : p * .9 + Math.sin(t * .25) * .04);
-    pinkLight.position.set(camera.position.x + 3, camera.position.y + 2.5, camZ - 6);
-    skyLight.position.set(camera.position.x - 3.5, camera.position.y - 2, camZ - 11);
+    const sx = reduce ? 0 : Math.sin(p * Math.PI * 2) * 1.4, sy = reduce ? 0 : Math.sin(p * Math.PI * 3) * .55;
+    camera.position.set(sx + pmx * 1.8, sy - pmy * 1.2, camZ);
+    camera.lookAt(sx * .3 - pmx * .6, sy * .3 + pmy * .4, camZ - 14);
+    camera.rotateZ(reduce ? 0 : p * .7 + Math.sin(t * .25) * .03);
+    pinkLight.position.set(camera.position.x + 3, camera.position.y + 2.5, camZ - 7);
+    violetLight.position.set(camera.position.x - 3.5, camera.position.y - 2, camZ - 12);
 
-    // past the hero the tunnel becomes a quiet backdrop so the page text stays easy to read
+    // past the hero the tunnel becomes a quiet backdrop: rings fade and the year numbers leave the text alone
     const past = Math.min(1, scrollY / (innerHeight * .7));
-    tunnelMat.uniforms.uTime.value = t;
-    tunnelMat.uniforms.uOpacity.value = .92 - .6 * past;
-    const focus = Math.round((CAM_OFFSET - camZ) / SPACING), dim = 1 - .6 * past;
-    clocks.forEach((c, i) => {
-      const d = camZ - c.base.z, near = Math.min(1, Math.max(0, (d - 2.4) / 2.5));  // clocks beside the camera fade out
-      const on = i === focus ? 1 : 0, alpha = near * dim;
-      c.rim.material.opacity = c.inner.material.opacity = alpha;
-      c.mats.forEach(m => { m.opacity = alpha; });
-      c.rim.material.emissiveIntensity = c.inner.material.emissiveIntensity = .15 + .5 * on * (.7 + .3 * Math.sin(t * 3));
-      c.g.position.set(c.base.x + Math.sin(t * .6 + c.phase) * .15, c.base.y + Math.cos(t * .5 + c.phase) * .2, c.base.z);
-      c.g.rotation.set(Math.cos(t * .4 + c.phase) * .3, Math.sin(t * .5 + c.phase) * .45, Math.sin(t * .3 + c.phase) * .2);
-      c.g.scale.setScalar(1 + on * (.18 + .04 * Math.sin(t * 3)));
-      c.minute.rotation.z = -(t * 1.6 + c.phase * 4);  // time runs fast in the tunnel
-      c.hour.rotation.z = -(t * .14 + c.phase);
+    const focus = Math.round((CAM_OFFSET - camZ) / SPACING), dim = 1 - .62 * past;
+    rings.forEach((r, i) => {
+      const d = camZ - r.g.position.z, near = Math.min(1, Math.max(0, (d - 2.2) / 2.5));  // rings beside the camera fade out
+      const on = i === focus ? 1 : 0;
+      const alpha = (.82 + .18 * on) * near * dim;
+      r.o.material.opacity = r.n.material.opacity = alpha;
+      r.o.material.emissiveIntensity = r.n.material.emissiveIntensity = .12 + .45 * on * (.75 + .25 * Math.sin(t * 3));
+      r.notches.material.opacity = alpha * .9;
+      r.notches.rotation.z = t * (i % 2 ? .12 : -.09) + i * .3;
+      r.g.rotation.x = Math.sin(t * .5 + r.phase) * .05;
+      r.g.rotation.y = Math.cos(t * .4 + r.phase) * .05;
+      r.g.scale.setScalar(1 + on * .025 * Math.sin(t * 3));
+      r.l.material.opacity = (.35 + .65 * on) * near * Math.max(0, 1 - (d - CAM_OFFSET) / 26) * (1 - past);
     });
 
     if (waveT < 1) {
-      waveT = Math.min(1, waveT + dt / 1.2);
-      const c = clocks[YEARS.indexOf(year)], e = 1 - Math.pow(1 - waveT, 3);
-      wave.position.copy(c.g.position); wave.rotation.copy(c.g.rotation);
-      wave.scale.setScalar(1 + e * 2.6);
+      waveT = Math.min(1, waveT + dt / 1.3);
+      const i = YEARS.indexOf(year), e = 1 - Math.pow(1 - waveT, 3);
+      wave.position.z = ringZ(i);
+      wave.scale.setScalar(1 + e * 1.8);
       wave.material.color.copy(COL[status(RSA, machine(year))]);
-      wave.material.opacity = (1 - waveT) * .9 * dim;
+      wave.material.opacity = (1 - waveT) * .85 * dim;
     }
 
-    sparkData.forEach((g, i) => {
-      const a = g.a + t * g.w, ahead = camZ - g.z;
+    gemData.forEach((g, i) => {
+      const a = g.a + t * g.w;
       holder.position.set(Math.cos(a) * g.r, Math.sin(a) * g.r + Math.sin(t + g.bob) * .15, g.z);
       holder.rotation.set(t * g.spin, t * g.spin * .7, 0);
-      holder.scale.setScalar(g.s * (1 - .4 * past) * Math.min(1, Math.max(0, (ahead - 2.5) / 3)));
-      holder.updateMatrix(); sparks.setMatrixAt(i, holder.matrix);
+      const ahead = camZ - g.z;  // gems right next to the camera would fly across the text: fade them in with distance
+      holder.scale.setScalar(g.s * (1 - .35 * past) * Math.min(1, Math.max(0, (ahead - 2.5) / 3)));
+      holder.updateMatrix(); gems.setMatrixAt(i, holder.matrix);
     });
-    sparks.instanceMatrix.needsUpdate = true;
+    gems.instanceMatrix.needsUpdate = true;
 
     crystal.rotation.set(t * .35, t * .5, 0);
     cage.rotation.set(-t * .2, t * .15, 0);
