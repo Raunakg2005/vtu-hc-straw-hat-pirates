@@ -1,0 +1,43 @@
+/* Qiskit Fall Fest 2026 palette, the same tokens as the dashboard (qday/ui.py) */
+:root {
+  --md-primary-fg-color: #392045;
+  --md-primary-fg-color--light: #5b3c6b;
+  --md-primary-fg-color--dark: #24122e;
+  --md-accent-fg-color: #e85291;
+  --md-accent-fg-color--transparent: rgba(232, 82, 145, 0.1);
+}
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #fbf8ff;
+  --md-typeset-a-color: #c23d78;
+}
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #1a1220;
+  --md-typeset-a-color: #ff8cbc;
+}
+.md-typeset h1, .md-typeset h2, .md-typeset h3 { font-weight: 700; letter-spacing: -0.01em; }
+.md-typeset h1 { color: var(--md-primary-fg-color); }
+[data-md-color-scheme="slate"] .md-typeset h1 { color: #f5ecf8; }
+
+/* hero on the home page */
+.qday-hero { padding: 0.5rem 0 1rem; }
+.qday-hero p.tagline { font-size: 1.15rem; max-width: 46rem; }
+.qday-hero .md-button { margin: 0.25rem 0.4rem 0.25rem 0; }
+
+/* stat tiles */
+.qday-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.8rem; margin: 1.2rem 0; }
+.qday-stats div { border-radius: 0.9rem; padding: 0.9rem 1rem; background: #ece6fd; }
+.qday-stats div:nth-child(2) { background: #fbd3e4; }
+.qday-stats div:nth-child(3) { background: #fbeab8; }
+.qday-stats div:nth-child(4) { background: #d6f0e4; }
+.qday-stats b { display: block; font-size: 1.6rem; line-height: 1.1; color: #392045; }
+.qday-stats span { font-size: 0.75rem; color: #5b4566; }
+[data-md-color-scheme="slate"] .qday-stats div { filter: brightness(0.9); }
+
+.md-typeset img { border-radius: 0.6rem; }
+
+/* outline buttons: readable on the dark scheme too */
+.md-typeset .md-button:not(.md-button--primary) { color: var(--md-primary-fg-color); border-color: var(--md-primary-fg-color); }
+.md-typeset .md-button--primary { color: #fff; }
+[data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary) { color: #f5ecf8; border-color: #ff8cbc; }
+[data-md-color-scheme="slate"] .md-typeset .md-button--primary { background: #e85291; border-color: #e85291; color: #fff; }
+.md-typeset .md-button:hover { background: var(--md-accent-fg-color); border-color: var(--md-accent-fg-color); color: #fff; }

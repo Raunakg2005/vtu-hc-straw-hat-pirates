@@ -72,3 +72,6 @@ presentation/
 
 # private: rehearsal notes for the live Q&A
 docs/judge-qa.md
+
+# built documentation site
+site/

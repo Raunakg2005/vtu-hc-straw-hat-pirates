@@ -30,6 +30,18 @@ jobs:
       - name: Results document matches the raw hardware data
         run: python scripts/summarize_results.py --check
 
+  docs:
+    # the Read the Docs site must build with no warnings (broken links, missing pages)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r docs/requirements.txt
+      - run: mkdocs build --strict
+
   secrets:
     # Fails on any live (verified) credential in the history; the sample app's fake keys are not live
     runs-on: ubuntu-latest

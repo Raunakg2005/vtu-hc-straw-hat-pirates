@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qday-time-machine"
-version = "1.0.0"
-description = "Find the cryptography a quantum computer will break, see when it breaks, and get the post-quantum fix"
+version = "1.0.1"
+description = "Quantum-threat scanner and Q-Day forecaster: find RSA/ECC a quantum computer will break, see the year, get the post-quantum fix and a CycloneDX CBOM"
 readme = "docs/PYPI.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -52,9 +52,11 @@ qday = "qday.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates"
-Documentation = "https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates/blob/main/docs/USER_GUIDE.md"
+Documentation = "https://qday-time-machine.readthedocs.io/"
 Source = "https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates"
 Demo = "https://youtu.be/8AHgcPisYlE"
+Changelog = "https://qday-time-machine.readthedocs.io/en/latest/changelog/"
+Issues = "https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates/issues"
 
 [tool.setuptools.packages.find]
 include = ["qday*"]

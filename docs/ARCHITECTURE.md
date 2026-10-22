@@ -6,36 +6,25 @@ app, see [USER_GUIDE.md](USER_GUIDE.md).
 ## Overview
 
 ```mermaid
-flowchart TB
-    subgraph Inputs
-      W[Websites] --> TLS
-      C[Code folders] --> CODE
-    end
-    subgraph qday["qday package"]
-      TLS[scanner/tls.py<br>TLS handshake + openssl] --> A[(Assets)]
-      CODE[scanner/code.py<br>pattern rules] --> A
-      A --> CAT[catalog.py<br>algorithm facts]
-      CAT --> RISK[forecast/risk.py<br>Mosca + harvest window]
-      EST[forecast/estimates.py<br>published costs] --> RISK
-      ROAD[forecast/roadmap.py<br>IBM roadmap] --> RISK
-      A --> CBOM[scanner/cbom.py<br>CycloneDX 1.6]
-      Q[quantum/shor.py + grover.py] --> RUN[quantum/runner.py<br>Aer / fake / IBM SamplerV2]
-      RUN --> VAL[quantum/stats.py + validation.py]
-      Q --> DBG[quantum/debug.py<br>quantum-debugger]
-      RES[(results/*.json)] --> CAL[forecast/calibrated.py<br>measured noise → RSA-2048]
-      PQC[migrate/pqc.py<br>ML-KEM + ML-DSA]
-    end
-    RISK --> UI
-    CBOM --> UI
-    VAL --> RES
-    CAL --> UI
-    DBG --> UI
-    PQC --> UI
-    UI[app.py<br>Streamlit dashboard] --> SRV[serve.py<br>one port: / and /app/]
-    LAND[landing/<br>three.js page] --> SRV
-    RISK --> CLI[cli.py<br>qday command]
-    CBOM --> CLI
+flowchart LR
+    IN[Websites<br>and code] --> SCAN[Scanner<br>TLS + code rules]
+    SCAN --> FC[Forecast<br>roadmap + Mosca risk]
+    SCAN --> CBOM[CBOM<br>CycloneDX 1.6]
+    QC[Quantum attacks<br>Shor + Grover] --> HW[IBM hardware<br>+ strict tests]
+    HW --> CAL[Calibrated<br>forecast]
+    FC --> OUT[Dashboard<br>and CLI]
+    CBOM --> OUT
+    CAL --> OUT
+    PQC[Post-quantum<br>ML-KEM + ML-DSA] --> OUT
 ```
+
+| Layer | Modules |
+| :--- | :--- |
+| Scanner | `scanner/tls.py`, `scanner/code.py`, `scanner/cbom.py`, `safety.py`, `catalog.py` |
+| Forecast | `forecast/estimates.py`, `forecast/roadmap.py`, `forecast/risk.py`, `forecast/calibrated.py` |
+| Quantum | `quantum/shor.py`, `quantum/grover.py`, `quantum/runner.py`, `quantum/stats.py`, `quantum/validation.py`, `quantum/debug.py` |
+| Post-quantum | `migrate/pqc.py` |
+| Interfaces | `app.py` + `ui.py` (dashboard), `cli.py` (`qday` command), `landing/` (3D page), `serve.py` (one-port server) |
 
 Everything that computes lives in the `qday` package and is plain Python with no UI code, so the dashboard, the
 CLI and the tests all call the same functions.

@@ -13,6 +13,7 @@ VTU-QFF Hackathon — Qiskit Fall Fest 2026
 **[Presentation (PPTX)](docs/Q-Day_Time_Machine_VTU-QFF-HC-0106.pptx)** &nbsp;·&nbsp;
 **[Run it in 3 commands](#quick-start)** &nbsp;·&nbsp;
 **[Full hardware results](docs/RESULTS.md)** &nbsp;·&nbsp;
+**[Documentation](https://qday-time-machine.readthedocs.io/)** &nbsp;·&nbsp;
 **[User guide](docs/USER_GUIDE.md)** &nbsp;·&nbsp;
 **[Architecture](docs/ARCHITECTURE.md)**
 
