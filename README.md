@@ -207,12 +207,26 @@ More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and the [methods page]
   unit is ±2ᵏ, so multiplication is a bit rotation plus NOT (173 two-qubit gates on hardware); other N use a
   permutation unitary (simulator scale). Every multiplier is checked on every input.
 
+<p align="center">
+  <img src="docs/circuits/shor_n15_a7.png" width="70%" alt="Shor circuit for N = 15, a = 7: Hadamards on three counting qubits, controlled multiply-by-7 and multiply-by-4 mod 15 on a four-qubit work register starting in 1, inverse QFT, then measurement">
+</p>
+<p align="center"><sub>Shor's order finding for N = 15, a = 7, as run on ibm_fez, ibm_kingston and ibm_marrakesh. Counting qubit <i>j</i> controls multiply by 7^(2^j) mod 15 (×7, ×4; ×1 is the identity and is left out), then the inverse QFT. Drawn by <code>scripts/draw_circuits.py</code> from the same code.</sub></p>
+
 ### Grover key search — `qday/quantum/grover.py`
 - Toy cipher `E_k(p) = S(p ⊕ k)` with a nonlinear S-box (PRESENT's 4-bit S-box; 3-bit on hardware). The
   oracle runs the cipher on every key at once and flips the phase of keys with `E_k(p) = c`; the diffuser
   reflects about the mean.
 - About (π/4)·√(2ⁿ) oracle calls instead of up to 2ⁿ trials: the square-root speed-up that halves symmetric
   key strength (why AES-256 is advised over AES-128). Success follows `sin²((2i+1)θ)`, including overshoot.
+
+<p align="center">
+  <img src="docs/circuits/grover_3bit_2iter.png" width="80%" alt="Grover circuit for a 3-bit key: Hadamards, then oracle and diffuser twice, then measurement">
+</p>
+<p align="center">
+  <img src="docs/circuits/grover_oracle.png" width="49%" alt="Oracle: XOR with the plaintext, the S-box, a phase flip on the target ciphertext, then the S-box inverse and XOR again">
+  <img src="docs/circuits/grover_diffuser.png" width="40%" alt="Diffuser: Hadamards and X gates around a multi-controlled phase flip, a reflection about the mean">
+</p>
+<p align="center"><sub>Grover key search on a 3-bit key, 2 iterations, as run on hardware (top). The oracle (left) XORs in the plaintext, applies the S-box, flips the phase where the output equals the known ciphertext, then uncomputes; the diffuser (right) reflects every amplitude about the mean.</sub></p>
 
 ### Independent check with quantum-debugger — `qday/quantum/debug.py`
 [quantum-debugger](https://pypi.org/project/quantum-debugger/) is our team lead's open-source circuit debugger.
@@ -382,11 +396,11 @@ vtu-hc-straw-hat-pirates/
 │   ├── forecast/          # Published estimates, IBM roadmap, risk (Mosca), hardware-calibrated forecast
 │   ├── quantum/           # Shor, Grover, IBM runner, statistics, strict criteria, quantum-debugger check
 │   └── migrate/           # Hybrid X25519 + ML-KEM-768, ML-DSA-65
-├── scripts/               # IBM hardware runs and summarize_results.py
+├── scripts/               # IBM hardware runs, summarize_results.py, draw_circuits.py
 ├── results/               # Raw hardware counts and analysed results
 ├── samples/legacy_app/    # Deliberately vulnerable code for the scanner demo
 ├── tests/                 # 1,002 tests
-├── docs/                  # Presentation (PPTX), RESULTS.md, USER_GUIDE.md, ARCHITECTURE.md, screenshots, docs site
+├── docs/                  # Presentation (PPTX), RESULTS.md, USER_GUIDE.md, ARCHITECTURE.md, circuits, screenshots, docs site
 ├── Dockerfile             # Production image
 └── .github/workflows/     # CI: lint, tests on Python 3.11 and 3.12, docs build, secret scan
 ```
