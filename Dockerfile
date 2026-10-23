@@ -6,9 +6,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl \
 
 RUN useradd --create-home app
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml README.md constraints.txt ./
 COPY qday ./qday
-RUN pip install --no-cache-dir ".[app]"
+RUN pip install --no-cache-dir -c constraints.txt ".[app]"
 COPY app.py serve.py ./
 COPY landing ./landing
 COPY .streamlit ./.streamlit

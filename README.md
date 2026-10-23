@@ -92,6 +92,7 @@ the quantum/ML technique you are applying.
 
 [![Watch the Q-Day Time Machine demo on YouTube](https://img.youtube.com/vi/nhXP6QLFjoU/maxresdefault.jpg)](https://youtu.be/nhXP6QLFjoU)
 
+**[🌐 Try it live](https://qdaytimemachine.vercel.app)** &nbsp;·&nbsp;
 **[▶ Watch the demo video](https://youtu.be/nhXP6QLFjoU)** (6:44, product demo plus a technical deep-dive) &nbsp;·&nbsp;
 **[Presentation (PPTX)](docs/Q-Day_Time_Machine_VTU-QFF-HC-0106.pptx)** &nbsp;·&nbsp;
 **[Documentation](https://qday-time-machine.readthedocs.io/)** &nbsp;·&nbsp;
@@ -383,6 +384,7 @@ paper's "under one million" at its assumed 10⁻³. Toffoli gates count as 6 CNO
 vtu-hc-straw-hat-pirates/
 ├── README.md              # This file
 ├── DEMO_VIDEO.md          # YouTube link to the demo video
+├── Deployed_Project_Link.md  # URL of the live deployment
 ├── requirements.txt       # Python dependencies
 ├── pyproject.toml         # Package metadata and the `qday` command
 ├── .gitignore
@@ -402,6 +404,9 @@ vtu-hc-straw-hat-pirates/
 ├── tests/                 # 1,002 tests
 ├── docs/                  # Presentation (PPTX), RESULTS.md, USER_GUIDE.md, ARCHITECTURE.md, circuits, screenshots, docs site
 ├── Dockerfile             # Production image
+├── Dockerfile.vercel      # Same image for Vercel (listens on $PORT)
+├── vercel.json            # Vercel: one container service, app
+├── constraints.txt        # Tested Qiskit and Streamlit versions for the images
 └── .github/workflows/     # CI: lint, tests on Python 3.11 and 3.12, docs build, secret scan
 ```
 
@@ -587,6 +592,7 @@ git pull --rebase       # update your branch on top of main
 
 | Resource | Link |
 | :--- | :--- |
+| 🌐 Live app | https://qdaytimemachine.vercel.app ([Deployed_Project_Link.md](Deployed_Project_Link.md)) |
 | 🎬 Demo video | https://youtu.be/nhXP6QLFjoU ([DEMO_VIDEO.md](DEMO_VIDEO.md)) |
 | 📊 Presentation | [docs/Q-Day_Time_Machine_VTU-QFF-HC-0106.pptx](docs/Q-Day_Time_Machine_VTU-QFF-HC-0106.pptx) |
 | 📘 Project documentation | https://qday-time-machine.readthedocs.io/ |

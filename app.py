@@ -23,7 +23,9 @@ from qday.scanner.cbom import build_cbom
 from qday.scanner.code import scan_code
 from qday.scanner.tls import scan_tls
 
-st.set_page_config(page_title="Q-Day Time Machine", page_icon=":material/history_toggle_off:", layout="wide")
+LOGO = str(Path(__file__).resolve().parent / "landing" / "logo.png")
+st.set_page_config(page_title="Q-Day Time Machine", page_icon=LOGO, layout="wide")
+st.logo(LOGO, size="large")
 ui.inject_css(st)
 ui.plotly_template()
 

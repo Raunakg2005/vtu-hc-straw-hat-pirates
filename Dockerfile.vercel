@@ -1,0 +1,25 @@
+# Vercel builds this file instead of Dockerfile: the same image, listening on Vercel's port
+FROM python:3.12-slim
+
+# openssl CLI lets the scanner read the negotiated key-exchange group (e.g. X25519MLKEM768)
+RUN apt-get update && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home app
+WORKDIR /app
+COPY pyproject.toml README.md constraints.txt ./
+COPY qday ./qday
+RUN pip install --no-cache-dir -c constraints.txt ".[app]"
+COPY app.py serve.py ./
+COPY landing ./landing
+COPY .streamlit ./.streamlit
+COPY results ./results
+COPY samples ./samples
+
+USER app
+# Set PORT=8080 in the Vercel project settings: Vercel sends traffic to $PORT, and the non-root user can't bind 80
+ENV PORT=8080
+EXPOSE 8080
+# landing page at /, dashboard at /app/ (Streamlit runs internally on 8502)
+HEALTHCHECK CMD python -c "import os, urllib.request; urllib.request.urlopen(f\"http://localhost:{os.environ.get('PORT', '8080')}/app/_stcore/health\")"
+CMD ["sh", "-c", "python serve.py --host 0.0.0.0 --port ${PORT}"]

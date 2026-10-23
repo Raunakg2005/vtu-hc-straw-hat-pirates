@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Q-Day Time Machine">
+  <title>Q-Day Time Machine</title>
+  <rect width="64" height="64" rx="15" fill="#392045"/>
+  <circle cx="30" cy="29" r="16" fill="none" stroke="#e85291" stroke-width="6"/>
+  <path d="M41 40 L51 50" stroke="#e85291" stroke-width="6.5" stroke-linecap="round"/>
+  <path d="M30 29 V18.5 M30 29 L37.5 33.5" fill="none" stroke="#f4c84e" stroke-width="3.6" stroke-linecap="round"/>
+  <circle cx="30" cy="29" r="2.7" fill="#f4c84e"/>
+</svg>

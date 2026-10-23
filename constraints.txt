@@ -1,0 +1,7 @@
+# Versions the dashboard is tested with, used by the Docker images (pip install -c constraints.txt).
+# Qiskit 2.6 crashed the server with a segmentation fault when two visitors' sessions built circuits at the same
+# time (seen on 2026-10-23 with qiskit 2.6.1, aer 0.18.0, runtime 0.51.0, streamlit 1.66.1); these versions do not.
+qiskit==2.1.2
+qiskit-aer==0.17.2
+qiskit-ibm-runtime==0.41.1
+streamlit==1.54.0

@@ -10,7 +10,8 @@ hide:
 <p class="tagline"><strong>Find the cryptography a quantum computer will break, see <em>when</em> it breaks, prove it on
 real IBM quantum hardware, and get the post-quantum fix.</strong></p>
 
-[Get started](USER_GUIDE.md#install){ .md-button .md-button--primary }
+[Try it live](https://qdaytimemachine.vercel.app){ .md-button .md-button--primary }
+[Get started](USER_GUIDE.md#install){ .md-button }
 [Watch the demo](https://youtu.be/nhXP6QLFjoU){ .md-button }
 [View on GitHub](https://github.com/vtu-qiskit-fall-fest-2026/vtu-hc-straw-hat-pirates){ .md-button }
 

@@ -137,12 +137,16 @@ h1, h2, h3, .ff-serif {{ font-family: "Fraunces", serif !important; color: {PLUM
 .ff-ok {{ color: {GREEN}; font-weight: 700; white-space: nowrap; }}
 .ff-bad {{ color: {BERRY}; font-weight: 700; white-space: nowrap; }}
 
-/* tabs as pills */
-.stTabs [data-baseweb="tab-list"] {{ gap: .4rem; background: {CREAM}; padding: .35rem; border-radius: 999px;
-  border: 1px solid {BORDER}; width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; }}
-.stTabs [data-baseweb="tab"] {{ border-radius: 999px; padding: .45rem 1.05rem; height: auto; font-weight: 700;
-  color: {PLUM}; white-space: nowrap; }}
-.stTabs [aria-selected="true"] {{ background: {PLUM} !important; color: {CREAM} !important; }}
+/* tabs as pills; ARIA roles, not BaseWeb attributes, so this holds across Streamlit versions (1.66 moved to React Aria) */
+.stTabs [role="tablist"] {{ gap: .4rem !important; background: {CREAM} !important; padding: .35rem !important;
+  border-radius: 999px !important; border: 1px solid {BORDER} !important; width: fit-content; max-width: 100%;
+  overflow-x: auto; scrollbar-width: none; box-shadow: none !important; }}
+.stTabs [role="tab"] {{ border-radius: 999px !important; padding: .45rem 1.05rem !important; height: auto !important;
+  font-weight: 700; color: {PLUM} !important; white-space: nowrap; border: none !important; box-shadow: none !important; }}
+.stTabs [role="tab"]:hover {{ background: {BG}; }}
+.stTabs [role="tab"][aria-selected="true"] {{ background: {PLUM} !important; color: {CREAM} !important; }}
+.stTabs [role="tab"] p {{ color: inherit !important; font-weight: 700; }}
+.stTabs [role="tab"]::after, .stTabs [role="tab"]::before {{ display: none !important; }}
 .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] {{ display: none; }}
 
 /* buttons */
@@ -198,7 +202,7 @@ h1, h2, h3, .ff-serif {{ font-family: "Fraunces", serif !important; color: {PLUM
   .ff-card .ff-k {{ font-size: .58rem; letter-spacing: .1em; }}
   .ff-card .ff-s {{ font-size: .74rem; }}
   .ff-section h2 {{ font-size: 1.55rem !important; }}
-  .stTabs [data-baseweb="tab"] {{ padding: .4rem .75rem; font-size: .85rem; }}
+  .stTabs [role="tab"] {{ padding: .4rem .75rem !important; font-size: .85rem; }}
   .ff-note {{ padding: .8rem .9rem; font-size: .9rem; gap: .6rem; }}
   .ff-eyebrow {{ letter-spacing: .14em; font-size: .64rem; }}
 }}

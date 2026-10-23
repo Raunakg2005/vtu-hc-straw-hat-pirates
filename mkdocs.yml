@@ -25,8 +25,9 @@ nav:
 theme:
   name: material
   language: en
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
   icon:
-    logo: material/clock-time-four-outline
     repo: fontawesome/brands/github
   font:
     text: DM Sans
